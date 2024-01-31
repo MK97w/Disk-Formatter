@@ -75,7 +75,24 @@ int GetSDDiskNumber()
 
 int main()
 {
-    auto driveLayoutInfo = std::make_unique<DRIVE_LAYOUT_INFORMATION_EX>;
     listAllVolumeInfo();
-     
+
+ /*   auto driveLayoutInfo = std::make_unique<DRIVE_LAYOUT_INFORMATION_EX>;
+    HANDLE hDevice = INVALID_HANDLE_VALUE;
+
+    hDevice = CreateFile(L"\\\\.\\PhysicalDrive2",
+        GENERIC_READ | GENERIC_WRITE,
+        0,              // Only we can access 
+        NULL,           // Default security
+        OPEN_EXISTING,  // For hardware, open existing 
+        0,              // File attributes
+        NULL);          //Do not copy attributes 
+   
+    CREATE_DISK dsk;
+    memset(&dsk, 0, sizeof(dsk));
+    CREATE_DISK_MBR dskmbr = { 0 };
+    dskmbr.Signature = 1;
+    dsk.PartitionStyle = PARTITION_STYLE_MBR;
+    dsk.Mbr = dskmbr;
+*/
 }
