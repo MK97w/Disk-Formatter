@@ -2,29 +2,31 @@
 #include <Windows.h>
 #include <iostream>
 #include <tchar.h>
+#include <fileapi.h>
 
-int main()
+void listAllVolumeInfo() 
 {
     _TCHAR buffer[MAX_PATH];
     DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer);
 
-    if (drives == 0) 
+    if (drives == 0)
     {
         std::cerr << "Error getting logical drives. Error code: " << GetLastError() << std::endl;
-        return 1;
     }
-
+    std::cout << "==========================================================\n";
     // Iterate through each drive
-    for (DWORD i = 0; i < drives; i += 4) 
+    for (DWORD i = 0; i < drives; i += 4)
     {
+
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
 
         // Check if the drive is a removable drive (e.g., SD card)
         UINT driveType = GetDriveType(drivePath);
 
-        if (driveType == DRIVE_REMOVABLE) 
+        if (driveType == DRIVE_REMOVABLE)
         {
-            std::wcout << "Removable drive found: " << drivePath <<'\n';
+
+            std::wcout << "Removable drive found: " << drivePath << '\n';
 
             // Get volume information
             _TCHAR volumeName[MAX_PATH];
@@ -33,14 +35,47 @@ int main()
             DWORD maxComponentLength;
             DWORD fileSystemFlags;
 
-            if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH)) 
+            if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
-                std::wcout << "Volume Name: " << volumeName << '\n';;
+                std::wcout << "Volume Name: " << volumeName << '\n';
                 std::wcout << "Serial Number: " << serialNumber << '\n';
                 std::wcout << "File System: " << fileSystem << std::endl;
             }
-            else 
+            else
                 std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
+            std::cout << "==========================================================\n";
+        }
+
+    }
+
+}
+
+
+int GetSDDiskNumber() 
+{
+    // Enumerate through drive letters
+    for (WCHAR drive = L'A'; drive <= L'Z'; ++drive) 
+    {
+        std::wstring driveLetter = std::wstring(1, drive) + L":\\";
+        std::wstring volumePath = driveLetter + L"\\";
+        WCHAR volumeDevicePath[MAX_PATH];
+        if (GetVolumePathNamesForVolumeNameW(volumePath.c_str(), volumeDevicePath, MAX_PATH, NULL)) 
+        {
+           std::wstring devicePath = volumeDevicePath;
+           size_t found = devicePath.find(L"\\", 0);
+           if (found != std::wstring::npos) 
+           {
+                std::wstring diskNumberStr = devicePath.substr(found + 1);
+                return _wtoi(diskNumberStr.c_str());
+           }
         }
     }
+    return -1; // SD card not found
+}
+
+int main()
+{
+    auto driveLayoutInfo = std::make_unique<DRIVE_LAYOUT_INFORMATION_EX>;
+    listAllVolumeInfo();
+     
 }
