@@ -4,6 +4,9 @@
 #include <tchar.h>
 #include <fileapi.h>
 
+
+HWND hDevice;
+
 void listAllVolumeInfo() 
 {
     _TCHAR buffer[MAX_PATH];
@@ -39,7 +42,8 @@ void listAllVolumeInfo()
             {
                 std::wcout << "Volume Name: " << volumeName << '\n';
                 std::wcout << "Serial Number: " << serialNumber << '\n';
-                std::wcout << "File System: " << fileSystem << std::endl;
+                std::wcout << "File System: " << fileSystem << '\n';
+                std::wcout << "Device No: " << (DWORD)((LRESULT)(ULONG_PTR)SNDMSG((hDevice), CB_GETITEMDATA, (WPARAM)(int)(i), 0L)) << std::endl;;
             }
             else
                 std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
@@ -50,7 +54,7 @@ void listAllVolumeInfo()
 
 }
 
-
+/*
 int GetSDDiskNumber() 
 {
     // Enumerate through drive letters
@@ -72,6 +76,7 @@ int GetSDDiskNumber()
     }
     return -1; // SD card not found
 }
+*/
 
 int main()
 {
