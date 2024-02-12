@@ -3,9 +3,12 @@
 #include <iostream>
 #include <tchar.h>
 #include <fileapi.h>
+#include "device.h"
+
 
 
 HWND hDevice;
+
 
 void listAllVolumeInfo() 
 {
@@ -80,6 +83,8 @@ int GetSDDiskNumber()
 
 int main()
 {
+    DeviceManager deviceManager;
+    deviceManager.getDeviceInfo();
     listAllVolumeInfo();
 
  /*   auto driveLayoutInfo = std::make_unique<DRIVE_LAYOUT_INFORMATION_EX>;
