@@ -25,11 +25,12 @@ public:
 	};
 
 
-
 	HANDLE hDrive;
 	HDEVINFO deviceInfo{};
 	SP_DEVINFO_DATA deviceInfoData{};
+	SP_DEVICE_INTERFACE_DATA deviceInterfaceData;
 	PSP_DEVICE_INTERFACE_DETAIL_DATA_A deviceInterfaceDetailData{};
+	
 
 public:
 	BOOL getDeviceInfo();
