@@ -1,6 +1,7 @@
 #include "device.h"
 #include <iostream>
 #include <devguid.h>
+
 #pragma comment(lib, "Setupapi.lib")
 
 
@@ -10,19 +11,7 @@ const GUID GUID_DEVINTERFACE_USB_HUB =
 
 int DeviceManager::getDriveNumber(HANDLE hDrive, char* path)
 {
-	DevTypeNumPartition deviceNumber;
-	VolumeDiskExtents diskExtent;
-	DWORD size = 0;
-	BOOL s;
-
-	/*DWORD size;
-	deviceInfo = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_USB_HUB, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-	deviceInfoData.cbSize = sizeof(deviceInfoData);
-	*/
-	int r = -1;
-	s = DeviceIoControl(hDrive, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL, 0, &deviceNumber, sizeof(deviceNumber),&size, NULL);
-	r = (int)deviceNumber.DeviceNumber;
-	return r;
+	return 32;
 }
 
 
@@ -65,14 +54,29 @@ BOOL DeviceManager::getDeviceInfo()
 				VolumeDiskExtents diskExtent;
 				DWORD size = 0;
 				BOOL s;
-
+				int r = -1;
 				/*DWORD size;
 				deviceInfo = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_USB_HUB, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 				deviceInfoData.cbSize = sizeof(deviceInfoData);
 				*/
-				int r = -1;
-				s = DeviceIoControl(hDrive, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL, 0, &deviceNumber, sizeof(deviceNumber), &size, NULL);
-				std::cout<< (int)deviceNumber.DeviceNumber<<'\n';
+				if (!DeviceIoControl(hDrive, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, NULL, 0,
+					&diskExtent, sizeof(diskExtent), &size, NULL) || (size <= 0) || (diskExtent.NumberOfDiskExtents < 1)) {
+					// DiskExtents are NO_GO (which is the case for external USB HDDs...)
+					s = DeviceIoControl(hDrive, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL, 0, &deviceNumber, sizeof(deviceNumber),
+						&size, NULL);
+					if ((!s) || (size == 0)) {
+						
+					}
+					r = (int)deviceNumber.DeviceNumber;
+				}
+				else if (diskExtent.NumberOfDiskExtents >= 2) {
+				}
+				else {
+					r = (int)diskExtent.Extents[0].DiskNumber;
+				}
+				if (r >= MAX_DRIVES) {;
+				}
+				std::cout << r;
 				
 	
 			}

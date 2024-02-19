@@ -24,18 +24,18 @@ public:
 		BOOLEAN   is_Removable;
 	};
 
-	struct DevTypeNumPartition 
+	typedef struct DevTypeNumPartition 
 	{
 		DWORD DeviceType;
 		ULONG DeviceNumber;
 		ULONG PartitionNumber;
-	};
+	}DevTypeNumPartition;
 
-	struct VolumeDiskExtents
+	typedef struct VolumeDiskExtents
 	{
 		DWORD NumberOfDiskExtents;
 		DISK_EXTENT Extents[8];
-	} ;
+	} VolumeDiskExtents;
 
 
 	HANDLE hDrive;
