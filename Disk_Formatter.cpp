@@ -6,10 +6,6 @@
 #include "device.h"
 
 
-
-HWND hDevice;
-
-
 void listAllVolumeInfo() 
 {
     _TCHAR buffer[MAX_PATH];
@@ -41,12 +37,17 @@ void listAllVolumeInfo()
             DWORD maxComponentLength;
             DWORD fileSystemFlags;
 
+
+
+
+
+
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
                 std::wcout << "Volume Name: " << volumeName << '\n';
                 std::wcout << "Serial Number: " << serialNumber << '\n';
                 std::wcout << "File System: " << fileSystem << '\n';
-                std::wcout << "Device No: " << (DWORD)((LRESULT)(ULONG_PTR)SNDMSG((hDevice), CB_GETITEMDATA, (WPARAM)(int)(i), 0L)) << std::endl;;
+                std::wcout << "Device No: " << i;
             }
             else
                 std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;

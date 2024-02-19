@@ -24,6 +24,19 @@ public:
 		BOOLEAN   is_Removable;
 	};
 
+	struct DevTypeNumPartition 
+	{
+		DWORD DeviceType;
+		ULONG DeviceNumber;
+		ULONG PartitionNumber;
+	};
+
+	struct VolumeDiskExtents
+	{
+		DWORD NumberOfDiskExtents;
+		DISK_EXTENT Extents[8];
+	} ;
+
 
 	HANDLE hDrive;
 	HDEVINFO deviceInfo{};
@@ -34,6 +47,12 @@ public:
 
 public:
 	BOOL getDeviceInfo();
+	int getDriveNumber(HANDLE hDrive, char* path);
+
+
+	static constexpr INT  DRIVE_INDEX_MIN = 0x00000080;
+	static constexpr INT  DRIVE_INDEX_MAX = 0x000000C0;
+	static constexpr INT  MAX_DRIVES = (DRIVE_INDEX_MAX - DRIVE_INDEX_MIN);
 
 
 };
