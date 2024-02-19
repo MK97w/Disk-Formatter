@@ -31,25 +31,33 @@ BOOL DeviceManager::getDeviceInfo()
 
 	for (auto i = 0; SetupDiEnumDeviceInfo(deviceInfo, i, &deviceInfoData); i++) 
 	{
-		deviceInterfaceDetailData = NULL;
-		deviceInterfaceData.cbSize = sizeof(deviceInterfaceData);
-		// Only care about the first interface (MemberIndex 0)
-		if ((SetupDiEnumDeviceInterfaces(deviceInfo, &deviceInfoData, &GUID_DEVINTERFACE_USB_HUB, 0, &deviceInterfaceData))
-			&& (!SetupDiGetDeviceInterfaceDetailA(deviceInfo, &deviceInterfaceData, NULL, 0, &size, NULL))
-			&& (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
-			&& ((deviceInterfaceDetailData = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size)) != NULL))
-		{
-			deviceInterfaceDetailData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
-			if (SetupDiGetDeviceInterfaceDetailA(deviceInfo, &deviceInterfaceData, deviceInterfaceDetailData, size, &size, NULL))
-			{
+
+				if (!SetupDiGetDeviceInterfaceDetailA(deviceInfo, &deviceInterfaceData, NULL, 0, &size, NULL)) {
+					if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+						deviceInterfaceDetailData = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size);
+						if (deviceInterfaceDetailData == NULL) {
+							continue;
+						}
+						deviceInterfaceDetailData->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+					}
+					else {
+						continue;
+					}
+				}
+				if (deviceInterfaceDetailData == NULL) {
+					continue;
+				}
+				if (!SetupDiGetDeviceInterfaceDetailA(deviceInfo, &deviceInterfaceData, deviceInterfaceDetailData, size, &size, NULL)) {
+					continue;
+				}
+
 				hDrive = CreateFileA(deviceInterfaceDetailData->DevicePath, GENERIC_READ | GENERIC_WRITE,
 					FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-				if (hDrive == INVALID_HANDLE_VALUE) 
-				{
-					//invald handle
+				if (hDrive == INVALID_HANDLE_VALUE) {
 					continue;
-
 				}
+
+
 				DevTypeNumPartition deviceNumber;
 				VolumeDiskExtents diskExtent;
 				DWORD size = 0;
@@ -81,7 +89,5 @@ BOOL DeviceManager::getDeviceInfo()
 	
 			}
 			//free(devint_detail_data);
-		}
-	}
 	return TRUE;
 }
