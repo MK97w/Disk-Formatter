@@ -37,17 +37,12 @@ void listAllVolumeInfo()
             DWORD maxComponentLength;
             DWORD fileSystemFlags;
 
-
-
-
-
-
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
                 std::wcout << "Volume Name: " << volumeName << '\n';
                 std::wcout << "Serial Number: " << serialNumber << '\n';
                 std::wcout << "File System: " << fileSystem << '\n';
-                std::wcout << "Device No: " << i;
+                std::wcout << "Device Index: " << i <<'\n';
             }
             else
                 std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
@@ -58,99 +53,8 @@ void listAllVolumeInfo()
 
 }
 
-/*
-int GetSDDiskNumber() 
-{
-    // Enumerate through drive letters
-    for (WCHAR drive = L'A'; drive <= L'Z'; ++drive) 
-    {
-        std::wstring driveLetter = std::wstring(1, drive) + L":\\";
-        std::wstring volumePath = driveLetter + L"\\";
-        WCHAR volumeDevicePath[MAX_PATH];
-        if (GetVolumePathNamesForVolumeNameW(volumePath.c_str(), volumeDevicePath, MAX_PATH, NULL)) 
-        {
-           std::wstring devicePath = volumeDevicePath;
-           size_t found = devicePath.find(L"\\", 0);
-           if (found != std::wstring::npos) 
-           {
-                std::wstring diskNumberStr = devicePath.substr(found + 1);
-                return _wtoi(diskNumberStr.c_str());
-           }
-        }
-    }
-    return -1; // SD card not found
-}
-*/
 
 int main()
 {
-    typedef struct _STORAGE_DEVICE_NUMBER {
-        DEVICE_TYPE  DeviceType;
-        ULONG  DeviceNumber;
-        ULONG  PartitionNumber;
-    } STORAGE_DEVICE_NUMBER, * PSTORAGE_DEVICE_NUMBER;
-
-    LPCWSTR volName[MAX_PATH];
-        HANDLE hFVol;
-        DWORD bytes;
-
-        hFVol = FindFirstVolume(volName, sizeof(volName));
-        if (!hFVol)
-        {
-            printf("error...\n");
-            return;
-        }
-        do
-        {
-            size_t len = strlen(volName);
-            if (volName[len - 1] == '\\')
-            {
-                volName[len - 1] = 0;
-                --len;
-            }
-
-            /* printf("OpenVol %s\n", volName); */
-            HANDLE hVol = CreateFile(volName, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-            if (hVol == INVALID_HANDLE_VALUE)
-                continue;
-
-            STORAGE_DEVICE_NUMBER sdn = { 0 };
-            if (!DeviceIoControl(hVol, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL,
-                0, &sdn, sizeof(sdn), &bytes, NULL))
-            {
-                printf("error...\n");
-                continue;
-            }
-            CloseHandle(hVol);
-
-            printf("Volume Type:%d, Device:%d, Partition:%d\n", (int)sdn.DeviceType, (int)sdn.DeviceNumber, (int)sdn.PartitionNumber);
-            /* if (sdn.DeviceType == FILE_DEVICE_DISK)
-                printf("\tIs a disk\n");
-                */
-        } while (FindNextVolume(hFVol, volName, sizeof(volName)));
-        FindVolumeClose(hFVol);
-
-
-    DeviceManager deviceManager;
-    deviceManager.getDeviceInfo();
     listAllVolumeInfo();
-
- /*   auto driveLayoutInfo = std::make_unique<DRIVE_LAYOUT_INFORMATION_EX>;
-    HANDLE hDevice = INVALID_HANDLE_VALUE;
-
-    hDevice = CreateFile(L"\\\\.\\PhysicalDrive2",
-        GENERIC_READ | GENERIC_WRITE,
-        0,              // Only we can access 
-        NULL,           // Default security
-        OPEN_EXISTING,  // For hardware, open existing 
-        0,              // File attributes
-        NULL);          //Do not copy attributes 
-   
-    CREATE_DISK dsk;
-    memset(&dsk, 0, sizeof(dsk));
-    CREATE_DISK_MBR dskmbr = { 0 };
-    dskmbr.Signature = 1;
-    dsk.PartitionStyle = PARTITION_STYLE_MBR;
-    dsk.Mbr = dskmbr;
-*/
 }
