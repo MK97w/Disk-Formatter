@@ -38,7 +38,7 @@ public:
 	} VolumeDiskExtents;
 
 
-	HANDLE hDrive;
+	//HANDLE hDrive;
 	HDEVINFO deviceInfo{};
 	SP_DEVINFO_DATA deviceInfoData{};
 	SP_DEVICE_INTERFACE_DATA deviceInterfaceData;
