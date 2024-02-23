@@ -85,7 +85,8 @@ int getDriveNumber(HANDLE hDrive)
 void listAllVolumeInfo() 
 {
     _TCHAR buffer[MAX_PATH];
-    DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer);
+    _TCHAR buffer2[MAX_PATH];
+    DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer) , data_type, size;
     HDEVINFO dev_info = NULL;
     SP_DEVINFO_DATA dev_info_data;
     SP_DEVICE_INTERFACE_DATA devint_data;
@@ -98,7 +99,7 @@ void listAllVolumeInfo()
     }
     std::cout << "==========================================================\n";
     // Iterate through each drive
-    for (DWORD i = 0; i < drives; i += 4)
+    for (DWORD i = 0; i < drives; i ++)
     {
 
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
@@ -108,6 +109,11 @@ void listAllVolumeInfo()
 
         if (driveType == DRIVE_REMOVABLE)
         {
+            dev_info = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+            dev_info_data.cbSize = sizeof(dev_info_data);
+            SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data);
+            memset(buffer2, 0, sizeof(buffer2));
+            SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME, &data_type, (LPBYTE)buffer2, sizeof(buffer2), &size);
 
             std::wcout << "Removable drive found: " << drivePath << '\n';
 
@@ -118,21 +124,17 @@ void listAllVolumeInfo()
             DWORD maxComponentLength;
             DWORD fileSystemFlags; 
 
-            dev_info = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-            dev_info_data.cbSize = sizeof(dev_info_data);
+
 
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
-                if (getDeviceInterfaceInfo(dev_info, dev_info_data, devint_data, devint_detail_data, i))
-                {
-                    hDrive = CreateFileA(devint_detail_data->DevicePath, GENERIC_READ | GENERIC_WRITE,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            
                     std::wcout << "Volume Name: " << volumeName << '\n';
                     std::wcout << "Serial Number: " << serialNumber << '\n';
                     std::wcout << "File System: " << fileSystem << '\n';
-                    std::wcout << "Device Index: " << getDriveNumber(hDrive) << '\n';
+                   //td::wcout << "Device Index: " << getDriveNumber(hDrive) << '\n';
                     
-                }
+            
                
             }
             else
