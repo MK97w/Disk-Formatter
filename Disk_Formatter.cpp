@@ -149,5 +149,77 @@ void listAllVolumeInfo()
 
 int main()
 {
-    listAllVolumeInfo();
+    //listAllVolumeInfo();
+
+        // List of USB storage drivers we know - list may be incomplete!
+    const char* usbstor_name[] = {
+        // Standard MS USB storage driver
+        "USBSTOR",
+        // USB card readers, with proprietary drivers (Realtek,etc...)
+        // Mostly "guessed" from http://www.carrona.org/dvrref.php
+        "RTSUER", "CMIUCR", "EUCR",
+        // UASP Drivers *MUST* be listed after this, starting with "UASPSTOR"
+        // (which is Microsoft's native UASP driver for Windows 8 and later)
+        // as we use "UASPSTOR" as a delimiter
+        "UASPSTOR", "VUSBSTOR", "ETRONSTOR", "ASUSSTPT"
+    };
+    // These are the generic (non USB) storage enumerators we also test
+    const char* genstor_name[] = {
+        // Generic storage drivers (Careful now!)
+        "SCSI", // "STORAGE",	// "STORAGE" is used by 'Storage Spaces" and stuff => DANGEROUS!
+        // Non-USB card reader drivers - This list *MUST* start with "SD" (delimiter)
+        // See http://itdoc.hitachi.co.jp/manuals/3021/30213B5200e/DMDS0094.HTM
+        // Also  http://www.carrona.org/dvrref.php. NB: All members from this list should have
+        // been reported as enumerators by Rufus, when Enum Debug is enabled.
+        "SD", "PCISTOR", "RTSOR", "JMCR", "JMCF", "RIMMPTSK", "RIMSPTSK", "RISD", "RIXDPTSK",
+        "TI21SONY", "ESD7SK", "ESM7SK", "O2MD", "O2SD", "VIACR", "GLREADER"
+    };
+    // Oh, and we also have card devices (e.g. 'SCSI\DiskO2Micro_SD_...') under the SCSI enumerator...
+    const char* scsi_disk_prefix = "SCSI\\Disk";
+    const char* scsi_card_name[] = {
+        "_SD_", "_SDHC_", "_SDXC_", "_MMC_", "_MS_", "_MSPro_", "_xDPicture_", "_O2Media_"
+    };
+    //const char* usb_speed_name[USB_SPEED_MAX] = { "USB", "USB 1.0", "USB 1.1", "USB 2.0", "USB 3.0", "USB 3.1" };
+    const char* windows_sandbox_vhd_label = "PortableBaseLayer";
+    // Hash table and String Array used to match a Device ID with the parent hub's Device Interface Path
+    char letter_name[] = " (?:)";
+    char drive_name[] = "?:\\";
+    char setting_name[32];
+    char uefi_togo_check[] = "?:\\EFI\\Rufus\\ntfs_x64.efi";
+    char scsi_card_name_copy[16];
+    BOOL r = FALSE, found = FALSE, post_backslash;
+    HDEVINFO dev_info = NULL;
+    SP_DEVINFO_DATA dev_info_data;
+    SP_DEVICE_INTERFACE_DATA devint_data;
+    PSP_DEVICE_INTERFACE_DETAIL_DATA_A devint_detail_data;
+    DEVINST parent_inst, grandparent_inst, device_inst;
+    DWORD size, i, j, k, l, data_type, drive_index;
+    DWORD uasp_start = ARRAYSIZE(usbstor_name), card_start = ARRAYSIZE(genstor_name);
+    ULONG list_size[ARRAYSIZE(usbstor_name)] = { 0 }, list_start[ARRAYSIZE(usbstor_name)] = { 0 }, full_list_size, ulFlags;
+    HANDLE hDrive;
+    LONG maxwidth = 0;
+    int s, u, v, score, drive_number, remove_drive, num_drives = 0;
+    char drive_letters[27], * device_id, * devid_list = NULL, display_msg[128];
+    char* p, * label, * display_name, buffer[MAX_PATH], str[MAX_PATH], device_instance_id[MAX_PATH], * method_str, * hub_path;
+    //uint32_t ignore_vid_pid[MAX_IGNORE_USB];
+    uint64_t drive_size = 0;
+    //usb_device_props props;
+
+    device_id = (char*)malloc(MAX_PATH);
+    if (device_id == NULL)
+        std::cout << "fail";
+
+    // Now use SetupDi to enumerate all our disk storage devices
+    dev_info = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+
+    dev_info_data.cbSize = sizeof(dev_info_data);
+    for (i = 0; num_drives < 128 && SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data); i++) {
+        memset(buffer, 0, sizeof(buffer));
+        //method_str = "";
+        hub_path = NULL;
+        if (!SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME,
+            &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
+            continue;
+        }
+    }
 }
