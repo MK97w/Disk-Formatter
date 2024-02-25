@@ -140,9 +140,7 @@ void listAllVolumeInfo()
                     std::wcout << "Volume Name: " << volumeName << '\n';
                     std::wcout << "Serial Number: " << serialNumber << '\n';
                     std::wcout << "File System: " << fileSystem << '\n';
-                   //td::wcout << "Device Index: " << getDriveNumber(hDrive) << '\n';
-                    
-            
+                   //td::wcout << "Device Index: " << getDriveNumber(hDrive) << '\n'
                
             }
             else
