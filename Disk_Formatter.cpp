@@ -10,6 +10,7 @@
 
 #pragma comment(lib, "Setupapi.lib")
 
+#define safe_free(p) do {free((void*)p); p = NULL;} while(0)
 
 const GUID GUID_DEVINTERFACE_USB_HUB =
 { 0xf18a0e88L, 0xc30c, 0x11d0, {0x88, 0x15, 0x00, 0xa0, 0xc9, 0x06, 0xbe, 0xd8} };
@@ -45,7 +46,18 @@ BOOL getDeviceInterfaceInfo(HDEVINFO& hdevInfo, SP_DEVINFO_DATA& spDevInfoData,
     return res;
 }
 
-int getDriveNumber(HANDLE hDrive)
+inline BOOL IsRemovable(const char* buffer)
+{
+    switch (*((DWORD*)buffer)) {
+    case CM_REMOVAL_POLICY_EXPECT_SURPRISE_REMOVAL:
+    case CM_REMOVAL_POLICY_EXPECT_ORDERLY_REMOVAL:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+int GetDriveNumber(HANDLE hDrive, char* path)
 {
     STORAGE_DEVICE_NUMBER_REDEF DeviceNumber;
     VOLUME_DISK_EXTENTS_REDEF DiskExtents;
@@ -53,31 +65,27 @@ int getDriveNumber(HANDLE hDrive)
     BOOL s;
     int r = -1;
 
-    if (!DeviceIoControl(hDrive, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, NULL, 0, 
-        &DiskExtents, sizeof(DiskExtents), &size, NULL) || (size <= 0) || (DiskExtents.NumberOfDiskExtents < 1))
-    {
+    if (!DeviceIoControl(hDrive, IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS, NULL, 0,
+        &DiskExtents, sizeof(DiskExtents), &size, NULL) || (size <= 0) || (DiskExtents.NumberOfDiskExtents < 1)) {
         // DiskExtents are NO_GO (which is the case for external USB HDDs...)
-        s = DeviceIoControl(hDrive, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL, 0, &DeviceNumber, sizeof(DeviceNumber),&size, NULL);
-        if ((!s) || (size == 0)) 
-        {   
+        s = DeviceIoControl(hDrive, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL, 0, &DeviceNumber, sizeof(DeviceNumber),
+            &size, NULL);
+        if ((!s) || (size == 0)) {
+          
             return -1;
         }
         r = (int)DeviceNumber.DeviceNumber;
     }
-    else if (DiskExtents.NumberOfDiskExtents >= 2) 
-    {
+    else if (DiskExtents.NumberOfDiskExtents >= 2) {
+        
         return -1;
     }
-    else
-    {
+    else {
         r = (int)DiskExtents.Extents[0].DiskNumber;
     }
-   /* if (r >= MAX_DRIVES)
-    {
-        uprintf("Device Number for device %s is too big (%d) - ignoring device", path, r);
-        uprintf("NOTE: This may be due to an excess of Virtual Drives, such as hidden ones created by the XBox PC app");
-        return -1;
-    }*/
+    if (r >= 64) {
+        r = -1;
+    }
     return r;
 }
 
@@ -213,13 +221,73 @@ int main()
     dev_info = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 
     dev_info_data.cbSize = sizeof(dev_info_data);
-    for (i = 0; num_drives < 128 && SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data); i++) {
+    for (i = 0; num_drives < 64 && SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data); i++)
+    {
+        std::cout << "==========================================================\n";
         memset(buffer, 0, sizeof(buffer));
-        //method_str = "";
-        hub_path = NULL;
         if (!SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME,
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
             continue;
+        }
+        if (SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
+            &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer))
+            std::cout << "removable" << '\n';
+
+        memset(buffer, 0, sizeof(buffer));
+        devint_data.cbSize = sizeof(devint_data);
+        devint_detail_data = NULL;
+
+
+        for (j = 0; ; j++)
+        {
+            safe_free(devint_detail_data);
+
+            if (!SetupDiEnumDeviceInterfaces(dev_info, &dev_info_data, &GUID_DEVINTERFACE_DISK, j, &devint_data)) {
+                if (GetLastError() != ERROR_NO_MORE_ITEMS)
+                {
+                }
+                else {
+                }
+                break;
+            }
+
+            if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, NULL, 0, &size, NULL)) {
+                if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                    devint_detail_data = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size);
+                    if (devint_detail_data == NULL)
+                    {
+                        continue;
+                    }
+                    devint_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+                }
+                else {
+                    continue;
+                }
+            }
+            if (devint_detail_data == NULL) {
+                continue;
+            }
+            if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, devint_detail_data, size, &size, NULL)) {
+
+                continue;
+            }
+
+            hDrive = CreateFileA(devint_detail_data->DevicePath, GENERIC_READ | GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+            if (hDrive == INVALID_HANDLE_VALUE) {
+                std::cout <<j <<" invalid" << '\n';
+            }
+
+            drive_number = GetDriveNumber(hDrive, devint_detail_data->DevicePath);
+            CloseHandle(hDrive);
+            if (drive_number < 0)
+                continue;
+
+            drive_index = drive_number + 128;
+            std::cout << "Drive Index: " << drive_index << '\n';
+            std::cout << "==========================================================\n";
+
+
         }
     }
 }
