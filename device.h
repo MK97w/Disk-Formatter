@@ -12,10 +12,10 @@ class Device
 	Device() {};
 
 private:
-	struct Props
+	struct Propterties
 	{
 
-		Props() :
+		Propterties() :
 			id{},	name{},	label{},
 			index{},size{}, is_USB{ false },
 			is_SCSI{ false },is_CARD{ false }, 
@@ -32,8 +32,9 @@ private:
 		BOOLEAN   is_CARD;
 		BOOLEAN   is_Removable;
 	};
+	int deviceCount;
 
 public:
-	static std::vector<Device&&>deviceList;
+
 };
 
