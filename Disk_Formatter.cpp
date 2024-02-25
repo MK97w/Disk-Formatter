@@ -272,9 +272,11 @@ int main()
                 continue;
             }
 
-            hDrive = CreateFileA(devint_detail_data->DevicePath, GENERIC_READ | GENERIC_WRITE,
+            hDrive = CreateFileA(devint_detail_data->DevicePath, 0,
                 FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (hDrive == INVALID_HANDLE_VALUE) {
+                const DWORD error = GetLastError();
+                std::cout << error<<'\n';
                 std::cout <<j <<" invalid" << '\n';
             }
 
