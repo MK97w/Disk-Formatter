@@ -9,17 +9,11 @@
 
 class Device
 {
-	Device() {};
-
-private:
-	struct Propterties
-	{
-
-		Propterties() :
-			id{},	name{},	label{},
-			index{},size{}, is_USB{ false },
-			is_SCSI{ false },is_CARD{ false }, 
-			is_Removable{ false }
+	Device(): 
+		id{},	name{},	label{},
+		index{},size{}, is_USB{ false },
+		is_SCSI{ false },is_CARD{ false }, 
+		is_Removable{ false }
 		{};
 		
 		std::string id;
@@ -31,10 +25,7 @@ private:
 		BOOLEAN   is_SCSI;
 		BOOLEAN   is_CARD;
 		BOOLEAN   is_Removable;
-	};
-	int deviceCount;
-
-public:
-
 };
+
+
 

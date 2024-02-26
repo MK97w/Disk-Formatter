@@ -28,23 +28,6 @@ typedef struct {
 } VOLUME_DISK_EXTENTS_REDEF;
 
 
-BOOL getDeviceInterfaceInfo(HDEVINFO& hdevInfo, SP_DEVINFO_DATA& spDevInfoData, 
-    SP_DEVICE_INTERFACE_DATA& spDeviceInterfaceData, PSP_DEVICE_INTERFACE_DETAIL_DATA_A& pspDeviceInterfaceDetailData, DWORD memIndex)
-{
-    BOOL res{ false };
-    DWORD size;
-    if( SetupDiEnumDeviceInterfaces( hdevInfo, &spDevInfoData, &GUID_DEVINTERFACE_DISK, memIndex/4, &spDeviceInterfaceData ) )
-    {
-        if ( SetupDiGetDeviceInterfaceDetailA(hdevInfo, &spDeviceInterfaceData, NULL, 0, &size, NULL))
-        {
-            if ( SetupDiGetDeviceInterfaceDetailA( hdevInfo, &spDeviceInterfaceData, pspDeviceInterfaceDetailData, size, &size, NULL ) )
-            {
-                res = TRUE;
-            }
-        }
-    }
-    return res;
-}
 
 inline BOOL IsRemovable(const char* buffer)
 {
@@ -95,11 +78,6 @@ void listAllVolumeInfo()
     _TCHAR buffer[MAX_PATH];
     _TCHAR buffer2[MAX_PATH];
     DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer) , data_type, size;
-    HDEVINFO dev_info = NULL;
-    SP_DEVINFO_DATA dev_info_data;
-    SP_DEVICE_INTERFACE_DATA devint_data;
-    PSP_DEVICE_INTERFACE_DETAIL_DATA_A devint_detail_data;
-    HANDLE hDrive;
 
     if (drives == 0)
     {
@@ -117,12 +95,6 @@ void listAllVolumeInfo()
 
         if (driveType == DRIVE_REMOVABLE)
         {
-            dev_info = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-            dev_info_data.cbSize = sizeof(dev_info_data);
-            SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data);
-            memset(buffer2, 0, sizeof(buffer2));
-            SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME, &data_type, (LPBYTE)buffer2, sizeof(buffer2), &size);
-
             std::wcout << "Removable drive found: " << drivePath << '\n';
 
             // Get volume information
@@ -140,7 +112,6 @@ void listAllVolumeInfo()
                     std::wcout << "Volume Name: " << volumeName << '\n';
                     std::wcout << "Serial Number: " << serialNumber << '\n';
                     std::wcout << "File System: " << fileSystem << '\n';
-                   //td::wcout << "Device Index: " << getDriveNumber(hDrive) << '\n'
                
             }
             else
