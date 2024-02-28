@@ -286,3 +286,12 @@ int main()
         }
     }
 }
+
+
+/*
+* Note to self:
+* 
+* Rufus lists devices starting from 130 to 131
+* 
+* My app finds 128 and 129 find out why
+*/
