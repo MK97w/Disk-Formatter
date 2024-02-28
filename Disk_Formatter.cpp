@@ -7,6 +7,8 @@
 #include <SetupAPI.h>
 #include <stdint.h>
 #include <cfgmgr32.h>
+#include <array>
+
 
 #pragma comment(lib, "Setupapi.lib")
 
@@ -27,7 +29,23 @@ typedef struct {
     DISK_EXTENT Extents[8];
 } VOLUME_DISK_EXTENTS_REDEF;
 
+class Device
+{
+    Device() :
+        id{}, name{}, label{},
+        index{}, size{}, is_USB{ false },
+        is_SCSI{ false }, is_CARD{ false }
+    {};
 
+    std::string id;
+    std::string name;
+    std::string label;
+    DWORD index;
+    uint64_t size;
+    BOOLEAN   is_USB;
+    BOOLEAN   is_SCSI;
+    BOOLEAN   is_CARD;
+};
 
 inline BOOL IsRemovable(const char* buffer)
 {
@@ -73,7 +91,7 @@ int GetDriveNumber(HANDLE hDrive, char* path)
 }
 
 
-void listAllVolumeInfo() 
+void listAllVolumeInfo()
 {
     _TCHAR buffer[MAX_PATH];
     _TCHAR buffer2[MAX_PATH];
@@ -122,6 +140,9 @@ void listAllVolumeInfo()
     }
 
 }
+
+
+//std::array<Device, 64> candidateDevices;
 
 
 int main()
@@ -198,9 +219,12 @@ int main()
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
             continue;
         }
-        if (SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
+        if ( !SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer))
-            std::cout << "removable" << '\n';
+        {
+            std::cout << "Found device is not removable!" << '\n';
+        }
+        std::cout << "removable" << '\n';
 
         memset(buffer, 0, sizeof(buffer));
         devint_data.cbSize = sizeof(devint_data);
