@@ -219,12 +219,12 @@ int main()
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
             continue;
         }
-        if ( !SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
+        if ( SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer))
         {
-            std::cout << "Found device is not removable!" << '\n';
+            std::cout << "removable" << '\n';
         }
-        std::cout << "removable" << '\n';
+        
 
         memset(buffer, 0, sizeof(buffer));
         devint_data.cbSize = sizeof(devint_data);
@@ -294,4 +294,26 @@ int main()
 * Rufus lists devices starting from 130 to 131
 * 
 * My app finds 128 and 129 find out why
+*/
+
+/*
+    Note to self: 29/02 
+
+   1- Rufus first SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME) to get the name
+
+    if USBSTOR (and variants) -> sets device props to USB
+                    -> Then looks for if generic storage names to find out if its CARD or SCSI
+
+   2-  SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_HARDWAREID,
+			&data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsVHD(buffer);  to find if its VHD
+
+            Buffer becomes : USBSTOR\Disk________MassStorageClass____ 
+                  ->If in step1 wont set the parameter is_CARD true  
+                    ->Inside this buffer again we search for SD Card related information  
+                        "_SD_", "_SDHC_", "_SDXC_", "_MMC_", "_MS_", "_MSPro_", "_xDPicture_", "_O2Media_"
+                        = "SCSI\\Disk";
+                        and _SD&", "_SDHC&", "_SDXC&", "_MMC&", "_MS&", "_MSPro&", "_xDPicture&", "_O2Media&
+
+    3- Checkes for removal policy with  SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
+			&data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer);
 */
