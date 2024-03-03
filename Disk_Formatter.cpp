@@ -110,7 +110,7 @@ void listAllVolumeInfo()
     }
     std::cout << "==========================================================\n";
     // Iterate through each drive
-    for (DWORD i = 0; i < drives; i ++)
+    for (DWORD i = 0; i < drives; i+=4)
     {
 
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
@@ -155,6 +155,9 @@ void listAllVolumeInfo()
 int main()
 {
     //listAllVolumeInfo();
+    int m{};
+    _TCHAR buffer2[MAX_PATH];
+    DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer2);
 
         // List of USB storage drivers we know - list may be incomplete!
     const char* usbstor_name[] = {
@@ -225,17 +228,13 @@ int main()
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
             continue;
         }
-        if ( SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
+        if ( !SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer))
         {
-            std::cout << "==========================================================\n";
-            std::cout << "removable" << '\n';
+            //std::cout << "==========================================================\n";
+            //std::cout << "removable" << '\n';
+            continue;
         }
-        else
-        {
-           continue;
-        }
-        
         memset(buffer, 0, sizeof(buffer));
         devint_data.cbSize = sizeof(devint_data);
         devint_detail_data = NULL;
@@ -292,18 +291,34 @@ int main()
             if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
                 NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0))
             {
-                std::cout << "NOT VALID OPTION DEVICE ELIMINATED !"<< '\n';
-                std::cout << "No media found in " << drive_index  <<'\n';
-                std::cout << "==========================================================\n";
+                m += 4;
                 CloseHandle(hDrive);
                 break;
             }
             else
             {
                 CloseHandle(hDrive);
-                std::cout << "Drive Index: " << drive_index << '\n';
-                std::cout << "==========================================================\n";
+                // Get volume information
+                
+                _TCHAR volumeName[MAX_PATH];
+                _TCHAR fileSystem[MAX_PATH];
+                DWORD serialNumber;
+                DWORD maxComponentLength;
+                DWORD fileSystemFlags;
+                _TCHAR drivePath[4] = { buffer2[m], buffer2[m + 1], buffer2[m + 2], buffer[m + 3] };
+
+              
+               if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
+                {
+                   std::wcout << "Drive Path : " << drivePath << '\n';
+                   std::wcout << "Drive Num : " << drive_index << '\n';
+                    std::wcout << "Volume Name: " << volumeName << '\n';
+                    std::wcout << "Serial Number: " << serialNumber << '\n';
+                    std::wcout << "File System: " << fileSystem << '\n';
+
+                }
             }
+            m += 4;
 
 
 
