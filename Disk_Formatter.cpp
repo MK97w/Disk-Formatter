@@ -65,121 +65,6 @@ inline BOOL IsRemovable(const char* buffer)
     }
 }
 
-static HANDLE GetHandle(char* Path, BOOL bLockDrive, BOOL bWriteAccess, BOOL bWriteShare)
-{
-    int i;
-    BYTE access_mask = 0;
-    DWORD size;
-    uint64_t EndTime;
-    HANDLE hDrive = INVALID_HANDLE_VALUE;
-    char DevPath[MAX_PATH];
-
-    if ((safe_strlen(Path) < 5) || (Path[0] != '\\') || (Path[1] != '\\') || (Path[3] != '\\'))
-        goto out;
-
-    // Resolve a device path, so that we can look for that handle in case of access issues.
-    if (safe_strncmp(Path, groot_name, groot_len) == 0)
-        static_strcpy(DevPath, &Path[groot_len]);
-    else if (QueryDosDeviceA(&Path[4], DevPath, sizeof(DevPath)) == 0)
-        strcpy(DevPath, "???");
-
-    for (i = 0; i < DRIVE_ACCESS_RETRIES; i++) {
-        // Try without FILE_SHARE_WRITE (unless specifically requested) so that
-        // we won't be bothered by the OS or other apps when we set up our data.
-        // However this means we might have to wait for an access gap...
-        // We keep FILE_SHARE_READ though, as this shouldn't hurt us any, and is
-        // required for enumeration.
-        hDrive = CreateFileA(Path, GENERIC_READ | (bWriteAccess ? GENERIC_WRITE : 0),
-            FILE_SHARE_READ | (bWriteShare ? FILE_SHARE_WRITE : 0),
-            NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (hDrive != INVALID_HANDLE_VALUE)
-            break;
-        if ((GetLastError() != ERROR_SHARING_VIOLATION) && (GetLastError() != ERROR_ACCESS_DENIED))
-            break;
-        if (i == 0) {
-            uprintf("Notice: Volume Device Path is %s", DevPath);
-            uprintf("Waiting for access on %s...", Path);
-        }
-        else if (!bWriteShare && (i > DRIVE_ACCESS_RETRIES / 3)) {
-            // If we can't seem to get a hold of the drive for some time, try to enable FILE_SHARE_WRITE...
-            uprintf("Warning: Could not obtain exclusive rights. Retrying with write sharing enabled...");
-            bWriteShare = TRUE;
-            // Try to report the process that is locking the drive
-            access_mask = GetProcessSearch(SEARCH_PROCESS_TIMEOUT, 0x07, FALSE);
-        }
-        Sleep(DRIVE_ACCESS_TIMEOUT / DRIVE_ACCESS_RETRIES);
-    }
-    if (hDrive == INVALID_HANDLE_VALUE) {
-        uprintf("Could not open %s: %s", Path, WindowsErrorString());
-        goto out;
-    }
-
-    if (bWriteAccess) {
-        uprintf("Opened %s for %s write access", Path, bWriteShare ? "shared" : "exclusive");
-    }
-
-    if (bLockDrive) {
-        if (DeviceIoControl(hDrive, FSCTL_ALLOW_EXTENDED_DASD_IO, NULL, 0, NULL, 0, &size, NULL)) {
-            uprintf("I/O boundary checks disabled");
-        }
-
-        EndTime = GetTickCount64() + DRIVE_ACCESS_TIMEOUT;
-        do {
-            if (DeviceIoControl(hDrive, FSCTL_LOCK_VOLUME, NULL, 0, NULL, 0, &size, NULL))
-                goto out;
-            if (IS_ERROR(FormatStatus))	// User cancel
-                break;
-            Sleep(DRIVE_ACCESS_TIMEOUT / DRIVE_ACCESS_RETRIES);
-        } while (GetTickCount64() < EndTime);
-        // If we reached this section, either we didn't manage to get a lock or the user cancelled
-        uprintf("Could not lock access to %s: %s", Path, WindowsErrorString());
-        // See if we can report the processes are accessing the drive
-        if (!IS_ERROR(FormatStatus) && (access_mask == 0))
-            access_mask = GetProcessSearch(SEARCH_PROCESS_TIMEOUT, 0x07, FALSE);
-        // Try to continue if the only access rights we saw were for read-only
-        if ((access_mask & 0x07) != 0x01)
-            safe_closehandle(hDrive);
-    }
-
-out:
-    return hDrive;
-}
-
-HANDLE GetPhysicalHandle(DWORD DriveIndex, BOOL bLockDrive, BOOL bWriteAccess, BOOL bWriteShare)
-{
-    HANDLE hPhysical = INVALID_HANDLE_VALUE;
-    char* PhysicalPath = GetPhysicalName(DriveIndex);
-    hPhysical = GetHandle(PhysicalPath, bLockDrive, bWriteAccess, bWriteShare);
-    safe_free(PhysicalPath);
-    return hPhysical;
-}
-
-char* GetPhysicalName(DWORD DriveIndex)
-{
-    BOOL success = FALSE;
-    char physical_name[24];
-
-    CheckDriveIndex(DriveIndex);
-    static_sprintf(physical_name, "\\\\.\\PhysicalDrive%lu", DriveIndex);
-    success = TRUE;
-out:
-    return (success) ? safe_strdup(physical_name) : NULL;
-}
-
-BOOL IsMediaPresent(DWORD DriveIndex)
-{
-    BOOL r;
-    HANDLE hPhysical;
-    DWORD size;
-    BYTE geometry[128];
-
-    hPhysical = GetPhysicalHandle(DriveIndex, FALSE, FALSE, TRUE);
-    r = DeviceIoControl(hPhysical, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
-        NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0);
-    safe_closehandle(hPhysical);
-    return r;
-}
-
 int GetDriveNumber(HANDLE hDrive, char* path)
 {
     STORAGE_DEVICE_NUMBER_REDEF DeviceNumber;
@@ -335,7 +220,6 @@ int main()
     dev_info_data.cbSize = sizeof(dev_info_data);
     for (i = 0; num_drives < 64 && SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data); i++)
     {
-        std::cout << "==========================================================\n";
         memset(buffer, 0, sizeof(buffer));
         if (!SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME,
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
@@ -344,10 +228,14 @@ int main()
         if ( SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer))
         {
+            std::cout << "==========================================================\n";
             std::cout << "removable" << '\n';
         }
+        else
+        {
+           continue;
+        }
         
-
         memset(buffer, 0, sizeof(buffer));
         devint_data.cbSize = sizeof(devint_data);
         devint_detail_data = NULL;
@@ -393,16 +281,30 @@ int main()
                 const DWORD error = GetLastError();
                 std::cout << error<<'\n';
                 std::cout <<j <<" invalid" << '\n';
+                break;
             }
 
             drive_number = GetDriveNumber(hDrive, devint_detail_data->DevicePath);
-            CloseHandle(hDrive);
             if (drive_number < 0)
                 continue;
-
             drive_index = drive_number + 128;
-            std::cout << "Drive Index: " << drive_index << '\n';
-            std::cout << "==========================================================\n";
+            BYTE geometry[128];
+            if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
+                NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0))
+            {
+                std::cout << "NOT VALID OPTION DEVICE ELIMINATED !"<< '\n';
+                std::cout << "No media found in " << drive_index  <<'\n';
+                std::cout << "==========================================================\n";
+                CloseHandle(hDrive);
+                break;
+            }
+            else
+            {
+                CloseHandle(hDrive);
+                std::cout << "Drive Index: " << drive_index << '\n';
+                std::cout << "==========================================================\n";
+            }
+
 
 
         }
