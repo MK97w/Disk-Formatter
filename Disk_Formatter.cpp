@@ -20,6 +20,10 @@
 	if ((DriveIndex < DRIVE_INDEX_MIN) || (DriveIndex > DRIVE_INDEX_MAX)) goto out; \
 	DriveIndex -= DRIVE_INDEX_MIN; } while (0)
 
+#define wchar_to_utf8_no_alloc(wsrc, dest, dest_size) \
+	WideCharToMultiByte(CP_UTF8, 0, wsrc, -1, dest, dest_size, NULL, NULL)
+
+#define STR_NO_LABEL                "NO_LABEL"
 
 const GUID GUID_DEVINTERFACE_USB_HUB =
 { 0xf18a0e88L, 0xc30c, 0x11d0, {0x88, 0x15, 0x00, 0xa0, 0xc9, 0x06, 0xbe, 0xd8} };
@@ -154,7 +158,7 @@ void listAllVolumeInfo()
 
 int main()
 {
-    //listAllVolumeInfo();
+   // listAllVolumeInfo();
 
         // List of USB storage drivers we know - list may be incomplete!
     const char* usbstor_name[] = {
@@ -289,9 +293,30 @@ int main()
                 }
                 else
                 {
+                    DWORD size, error;
+                    _TCHAR VolumeLabel[MAX_PATH];
+                    _TCHAR VolumeName[MAX_PATH], FileSystemName[MAX_PATH];
+                    DWORD VolumeSerialNumber, MaximumComponentLength, FileSystemFlags;
+
+
+                    _TCHAR volumeName[MAX_PATH];
+                    _TCHAR fileSystem[MAX_PATH];
+                    DWORD serialNumber;
+                    DWORD maxComponentLength;
+                    DWORD fileSystemFlags;
+
+
+
+                    if (GetVolumeInformationByHandleW(hDrive, VolumeName, MAX_PATH, &VolumeSerialNumber, &MaximumComponentLength, &FileSystemFlags, FileSystemName, MAX_PATH))
+                    {
+                        //wchar_to_utf8_no_alloc(VolumeName, VolumeLabel, sizeof(VolumeLabel));
+                        //*label = (VolumeLabel[0] != 0) ? VolumeLabel : STR_NO_LABEL;
+                    }
+
                     std::cout << "==========================================================\n";
                     CloseHandle(hDrive);
-                    std::cout << "Drive Index: " << drive_index << '\n';
+                    std::wcout << "Volume Name: " << VolumeName << '\n';
+                    std::cout << " Drive Index: " << drive_index << '\n';
                     std::cout << "==========================================================\n";
                 }
             }
