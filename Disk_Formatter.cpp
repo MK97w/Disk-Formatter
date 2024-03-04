@@ -228,86 +228,80 @@ int main()
         if (SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer))
         {
-            std::cout << "==========================================================\n";
-            std::cout << "removable" << '\n';
+
+            memset(buffer, 0, sizeof(buffer));
+            devint_data.cbSize = sizeof(devint_data);
+            devint_detail_data = NULL;
+
+            for (j = 0; ; j++)
+            {
+                safe_free(devint_detail_data);
+
+                if (!SetupDiEnumDeviceInterfaces(dev_info, &dev_info_data, &GUID_DEVINTERFACE_DISK, j, &devint_data)) {
+                    if (GetLastError() != ERROR_NO_MORE_ITEMS)
+                    {
+                    }
+                    else {
+                    }
+                    break;
+                }
+
+                if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, NULL, 0, &size, NULL)) {
+                    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                        devint_detail_data = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size);
+                        if (devint_detail_data == NULL)
+                        {
+                            continue;
+                        }
+                        devint_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+                    }
+                    else {
+                        continue;
+                    }
+                }
+                if (devint_detail_data == NULL) {
+                    continue;
+                }
+                if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, devint_detail_data, size, &size, NULL)) {
+
+                    continue;
+                }
+
+                hDrive = CreateFileA(devint_detail_data->DevicePath, 0,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                if (hDrive == INVALID_HANDLE_VALUE) {
+                    const DWORD error = GetLastError();
+                    std::cout << error << '\n';
+                    std::cout << j << " invalid" << '\n';
+                    break;
+                }
+
+                drive_number = GetDriveNumber(hDrive, devint_detail_data->DevicePath);
+                if (drive_number < 0)
+                    continue;
+                drive_index = drive_number + 128;
+                BYTE geometry[128];
+                if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
+                    NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0))
+                {
+                    CloseHandle(hDrive);
+                    break;
+                }
+                else
+                {
+                    std::cout << "==========================================================\n";
+                    CloseHandle(hDrive);
+                    std::cout << "Drive Index: " << drive_index << '\n';
+                    std::cout << "==========================================================\n";
+                }
+            }
+    
         }
         else
         {
             continue;
         }
 
-        memset(buffer, 0, sizeof(buffer));
-        devint_data.cbSize = sizeof(devint_data);
-        devint_detail_data = NULL;
-
-
-        for (j = 0; ; j++)
-        {
-            safe_free(devint_detail_data);
-
-            if (!SetupDiEnumDeviceInterfaces(dev_info, &dev_info_data, &GUID_DEVINTERFACE_DISK, j, &devint_data)) {
-                if (GetLastError() != ERROR_NO_MORE_ITEMS)
-                {
-                }
-                else {
-                }
-                break;
-            }
-
-            if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, NULL, 0, &size, NULL)) {
-                if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                    devint_detail_data = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size);
-                    if (devint_detail_data == NULL)
-                    {
-                        continue;
-                    }
-                    devint_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
-                }
-                else {
-                    continue;
-                }
-            }
-            if (devint_detail_data == NULL) {
-                continue;
-            }
-            if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, devint_detail_data, size, &size, NULL)) {
-
-                continue;
-            }
-
-            hDrive = CreateFileA(devint_detail_data->DevicePath, 0,
-                FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-            if (hDrive == INVALID_HANDLE_VALUE) {
-                const DWORD error = GetLastError();
-                std::cout << error << '\n';
-                std::cout << j << " invalid" << '\n';
-                break;
-            }
-
-            drive_number = GetDriveNumber(hDrive, devint_detail_data->DevicePath);
-            if (drive_number < 0)
-                continue;
-            drive_index = drive_number + 128;
-            BYTE geometry[128];
-            if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
-                NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0))
-            {
-                std::cout << "NOT VALID OPTION DEVICE ELIMINATED !" << '\n';
-                std::cout << "No media found in " << drive_index << '\n';
-                std::cout << "==========================================================\n";
-                CloseHandle(hDrive);
-                break;
-            }
-            else
-            {
-                CloseHandle(hDrive);
-                std::cout << "Drive Index: " << drive_index << '\n';
-                std::cout << "==========================================================\n";
-            }
-
-
-
-        }
     }
 }
 
