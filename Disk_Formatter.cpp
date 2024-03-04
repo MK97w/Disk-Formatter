@@ -79,13 +79,13 @@ int GetDriveNumber(HANDLE hDrive, char* path)
         s = DeviceIoControl(hDrive, IOCTL_STORAGE_GET_DEVICE_NUMBER, NULL, 0, &DeviceNumber, sizeof(DeviceNumber),
             &size, NULL);
         if ((!s) || (size == 0)) {
-          
+
             return -1;
         }
         r = (int)DeviceNumber.DeviceNumber;
     }
     else if (DiskExtents.NumberOfDiskExtents >= 2) {
-        
+
         return -1;
     }
     else {
@@ -102,7 +102,7 @@ void listAllVolumeInfo()
 {
     _TCHAR buffer[MAX_PATH];
     _TCHAR buffer2[MAX_PATH];
-    DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer) , data_type, size;
+    DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer), data_type, size;
 
     if (drives == 0)
     {
@@ -110,7 +110,7 @@ void listAllVolumeInfo()
     }
     std::cout << "==========================================================\n";
     // Iterate through each drive
-    for (DWORD i = 0; i < drives; i+=4)
+    for (DWORD i = 0; i < drives; i++)
     {
 
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
@@ -127,17 +127,17 @@ void listAllVolumeInfo()
             _TCHAR fileSystem[MAX_PATH];
             DWORD serialNumber;
             DWORD maxComponentLength;
-            DWORD fileSystemFlags; 
+            DWORD fileSystemFlags;
 
 
 
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
-            
-                    std::wcout << "Volume Name: " << volumeName << '\n';
-                    std::wcout << "Serial Number: " << serialNumber << '\n';
-                    std::wcout << "File System: " << fileSystem << '\n';
-               
+
+                std::wcout << "Volume Name: " << volumeName << '\n';
+                std::wcout << "Serial Number: " << serialNumber << '\n';
+                std::wcout << "File System: " << fileSystem << '\n';
+
             }
             else
                 std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
@@ -155,9 +155,6 @@ void listAllVolumeInfo()
 int main()
 {
     //listAllVolumeInfo();
-    int m{};
-    _TCHAR buffer2[MAX_PATH];
-    DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer2);
 
         // List of USB storage drivers we know - list may be incomplete!
     const char* usbstor_name[] = {
@@ -228,13 +225,17 @@ int main()
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
             continue;
         }
-        if ( !SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
+        if (SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
             &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer))
         {
-            //std::cout << "==========================================================\n";
-            //std::cout << "removable" << '\n';
+            std::cout << "==========================================================\n";
+            std::cout << "removable" << '\n';
+        }
+        else
+        {
             continue;
         }
+
         memset(buffer, 0, sizeof(buffer));
         devint_data.cbSize = sizeof(devint_data);
         devint_detail_data = NULL;
@@ -278,8 +279,8 @@ int main()
                 FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (hDrive == INVALID_HANDLE_VALUE) {
                 const DWORD error = GetLastError();
-                std::cout << error<<'\n';
-                std::cout <<j <<" invalid" << '\n';
+                std::cout << error << '\n';
+                std::cout << j << " invalid" << '\n';
                 break;
             }
 
@@ -291,34 +292,18 @@ int main()
             if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
                 NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0))
             {
-                m += 4;
+                std::cout << "NOT VALID OPTION DEVICE ELIMINATED !" << '\n';
+                std::cout << "No media found in " << drive_index << '\n';
+                std::cout << "==========================================================\n";
                 CloseHandle(hDrive);
                 break;
             }
             else
             {
                 CloseHandle(hDrive);
-                // Get volume information
-                
-                _TCHAR volumeName[MAX_PATH];
-                _TCHAR fileSystem[MAX_PATH];
-                DWORD serialNumber;
-                DWORD maxComponentLength;
-                DWORD fileSystemFlags;
-                _TCHAR drivePath[4] = { buffer2[m], buffer2[m + 1], buffer2[m + 2], buffer[m + 3] };
-
-              
-               if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
-                {
-                   std::wcout << "Drive Path : " << drivePath << '\n';
-                   std::wcout << "Drive Num : " << drive_index << '\n';
-                    std::wcout << "Volume Name: " << volumeName << '\n';
-                    std::wcout << "Serial Number: " << serialNumber << '\n';
-                    std::wcout << "File System: " << fileSystem << '\n';
-
-                }
+                std::cout << "Drive Index: " << drive_index << '\n';
+                std::cout << "==========================================================\n";
             }
-            m += 4;
 
 
 
@@ -329,14 +314,14 @@ int main()
 
 /*
 * Note to self:
-* 
+*
 * Rufus lists devices starting from 130 to 131
-* 
+*
 * My app finds 128 and 129 find out why
 */
 
 /*
-    Note to self: 29/02 
+    Note to self: 29/02
 
    1- Rufus first SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME) to get the name
 
@@ -344,17 +329,17 @@ int main()
                     -> Then looks for if generic storage names to find out if its CARD or SCSI
 
    2-  SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_HARDWAREID,
-			&data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsVHD(buffer);  to find if its VHD
+            &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsVHD(buffer);  to find if its VHD
 
-            Buffer becomes : USBSTOR\Disk________MassStorageClass____ 
-                  ->If in step1 wont set the parameter is_CARD true  
-                    ->Inside this buffer again we search for SD Card related information  
+            Buffer becomes : USBSTOR\Disk________MassStorageClass____
+                  ->If in step1 wont set the parameter is_CARD true
+                    ->Inside this buffer again we search for SD Card related information
                         "_SD_", "_SDHC_", "_SDXC_", "_MMC_", "_MS_", "_MSPro_", "_xDPicture_", "_O2Media_"
                         = "SCSI\\Disk";
                         and _SD&", "_SDHC&", "_SDXC&", "_MMC&", "_MS&", "_MSPro&", "_xDPicture&", "_O2Media&
 
     3- Checkes for removal policy with  SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
-			&data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer);
+            &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer);
 
     4- IsMediaPresent(drive_index)) where we eliminate the device if there is no media
 */
