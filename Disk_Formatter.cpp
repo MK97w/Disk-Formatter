@@ -191,6 +191,7 @@ int main()
     //const char* usb_speed_name[USB_SPEED_MAX] = { "USB", "USB 1.0", "USB 1.1", "USB 2.0", "USB 3.0", "USB 3.1" };
     const char* windows_sandbox_vhd_label = "PortableBaseLayer";
     // Hash table and String Array used to match a Device ID with the parent hub's Device Interface Path
+    char* drive, drives[26 * 4 + 1];
     char letter_name[] = " (?:)";
     char drive_name[] = "?:\\";
     char setting_name[32];
@@ -213,6 +214,9 @@ int main()
     //uint32_t ignore_vid_pid[MAX_IGNORE_USB];
     uint64_t drive_size = 0;
     //usb_device_props props;
+
+    //get all drives first
+    GetLogicalDriveStringsA(sizeof(drives), drives);
 
     device_id = (char*)malloc(MAX_PATH);
     if (device_id == NULL)
@@ -293,29 +297,10 @@ int main()
                 }
                 else
                 {
-                    DWORD size, error;
-                    _TCHAR VolumeLabel[MAX_PATH];
-                    _TCHAR VolumeName[MAX_PATH], FileSystemName[MAX_PATH];
-                    DWORD VolumeSerialNumber, MaximumComponentLength, FileSystemFlags;
-
-
-                    _TCHAR volumeName[MAX_PATH];
-                    _TCHAR fileSystem[MAX_PATH];
-                    DWORD serialNumber;
-                    DWORD maxComponentLength;
-                    DWORD fileSystemFlags;
-
-
-
-                    if (GetVolumeInformationByHandleW(hDrive, VolumeName, MAX_PATH, &VolumeSerialNumber, &MaximumComponentLength, &FileSystemFlags, FileSystemName, MAX_PATH))
-                    {
-                        //wchar_to_utf8_no_alloc(VolumeName, VolumeLabel, sizeof(VolumeLabel));
-                        //*label = (VolumeLabel[0] != 0) ? VolumeLabel : STR_NO_LABEL;
-                    }
-
+                    drive_name[0] = drives[i * 4];
                     std::cout << "==========================================================\n";
                     CloseHandle(hDrive);
-                    std::wcout << "Volume Name: " << VolumeName << '\n';
+                    std::cout << " Drive Label: " << drive_name << '\n';
                     std::cout << " Drive Index: " << drive_index << '\n';
                     std::cout << "==========================================================\n";
                 }
