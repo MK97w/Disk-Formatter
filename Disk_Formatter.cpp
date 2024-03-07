@@ -366,3 +366,8 @@ int main()
 
     4- IsMediaPresent(drive_index)) where we eliminate the device if there is no media
 */
+
+/*Note to self
+* 
+* wcout part didnt work when turkish char encountered and broke.
+*/
