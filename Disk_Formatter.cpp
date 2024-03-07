@@ -215,6 +215,13 @@ int main()
     uint64_t drive_size = 0;
     //usb_device_props props;
 
+
+    _TCHAR volumeName[MAX_PATH];
+    _TCHAR fileSystem[MAX_PATH];
+    DWORD serialNumber;
+    DWORD maxComponentLength;
+    DWORD fileSystemFlags;
+
     //get all drives first
     GetLogicalDriveStringsA(sizeof(drives), drives);
 
@@ -298,11 +305,23 @@ int main()
                 else
                 {
                     drive_name[0] = drives[i * 4];
-                    std::cout << "==========================================================\n";
-                    CloseHandle(hDrive);
-                    std::cout << " Drive Label: " << drive_name << '\n';
-                    std::cout << " Drive Index: " << drive_index << '\n';
-                    std::cout << "==========================================================\n";
+
+                    _TCHAR drivePath[4];
+             
+                    int written = MultiByteToWideChar(CP_ACP, 0, drive_name, 4, drivePath, 4);
+
+
+                    if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
+                    {
+                        std::cout << "==========================================================\n";
+                        CloseHandle(hDrive);
+                        std::cout << "Drive Label : " << drive_name << '\n';
+                        std::wcout << "Drive Name: " << volumeName << '\n';
+                        std::cout << "Serial Number: " << serialNumber << '\n';
+                        std::wcout << "File System: " << fileSystem << '\n';
+                        std::cout << "Drive Index: " << drive_index << '\n';
+                        std::cout << "==========================================================\n";
+                    }
                 }
             }
     
