@@ -8,7 +8,8 @@
 #include <stdint.h>
 #include <cfgmgr32.h>
 #include <array>
-
+#include <io.h> 
+#include <fcntl.h> 
 
 #pragma comment(lib, "Setupapi.lib")
 
@@ -159,6 +160,9 @@ void listAllVolumeInfo()
 int main()
 {
    // listAllVolumeInfo();
+
+      setlocale(LC_ALL, "Turkish");
+
 
         // List of USB storage drivers we know - list may be incomplete!
     const char* usbstor_name[] = {
