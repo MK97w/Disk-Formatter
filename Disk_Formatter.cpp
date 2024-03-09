@@ -375,3 +375,9 @@ int main()
 * 
 * wcout part didnt work when turkish char encountered and broke.
 */
+
+/*Note to self
+*
+* Probably i will not need device id -> evint_detail_data->DevicePath, should be enough. I think i should only keep this and open deivce using it
+
+*/
