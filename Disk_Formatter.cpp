@@ -1,4 +1,4 @@
-
+﻿
 #include <Windows.h>
 #include <iostream>
 #include <tchar.h>
@@ -11,9 +11,11 @@
 #include <io.h> 
 #include <fcntl.h> 
 
+
 #pragma comment(lib, "Setupapi.lib")
 
 #define safe_free(p) do {free((void*)p); p = NULL;} while(0)
+#define safe_sprintf(dst, count, ...) do {_snprintf(dst, count, __VA_ARGS__); (dst)[(count)-1] = 0; } while(0)
 #define static_sprintf(dst, ...) safe_sprintf(dst, sizeof(dst), __VA_ARGS__)
 #define CheckDriveIndex(DriveIndex) do {                                            \
 	if ((int)DriveIndex < 0) goto out;                                              \
@@ -25,6 +27,26 @@
 	WideCharToMultiByte(CP_UTF8, 0, wsrc, -1, dest, dest_size, NULL, NULL)
 
 #define STR_NO_LABEL                "NO_LABEL"
+
+
+#define LEFT_TO_RIGHT_MARK          "‎"
+#define MSG_020                         3020
+#define MSG_000                         3000
+#define MSG_MAX                         3351
+
+
+
+static __inline uint16_t upo2(uint16_t v)
+{
+    v--;
+    v |= v >> 1;
+    v |= v >> 2;
+    v |= v >> 4;
+    v |= v >> 8;
+    v++;
+    return v;
+}
+
 
 const GUID GUID_DEVINTERFACE_USB_HUB =
 { 0xf18a0e88L, 0xc30c, 0x11d0, {0x88, 0x15, 0x00, 0xa0, 0xc9, 0x06, 0xbe, 0xd8} };
@@ -83,6 +105,48 @@ uint64_t GetDriveSize(HANDLE& hDrive)
         return 0;
     return DiskGeometry->DiskSize.QuadPart;
 }
+
+
+char* SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units)
+{
+    char** msg_table = NULL;
+    char* default_msg_table[MSG_MAX - MSG_000];
+    int suffix;
+    static char str_size[32];
+    const char* dir = ((0) && (!copy_to_log)) ? LEFT_TO_RIGHT_MARK : "";
+    double hr_size = (double)size;
+    double t;
+    uint16_t i_size;
+    char** _msg_table = copy_to_log ? default_msg_table : msg_table;
+    const double divider = fake_units ? 1000.0 : 1024.0;
+
+    for (suffix = 0; suffix < 6 - 1; suffix++) {
+        if (hr_size < divider)
+            break;
+        hr_size /= divider;
+    }
+    if (suffix == 0) {
+        static_sprintf(str_size, "%s%d%s %s", dir, (int)hr_size, dir, _msg_table[MSG_020 - MSG_000]);
+    }
+    else if (fake_units) {
+        if (hr_size < 8) {
+            static_sprintf(str_size, (fabs((hr_size * 10.0) - (floor(hr_size + 0.5) * 10.0)) < 0.5) ? "%0.0f%s" : "%0.1f%s",
+                hr_size, _msg_table[MSG_020 + suffix - MSG_000]);
+        }
+        else {
+            t = (double)upo2((uint16_t)hr_size);
+            i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
+            static_sprintf(str_size, "%s%d%s %s", dir, i_size, dir, _msg_table[MSG_020 + suffix - MSG_000]);
+        }
+    }
+    else {
+        static_sprintf(str_size, (hr_size * 10.0 - (floor(hr_size) * 10.0)) < 0.5 ?
+            "%s%0.0f%s %s" : "%s%0.1f%s %s", dir, hr_size, dir, _msg_table[MSG_020 + suffix - MSG_000]);
+    }
+    return str_size;
+}
+
+
 int GetDriveNumber(HANDLE hDrive, char* path)
 {
     STORAGE_DEVICE_NUMBER_REDEF DeviceNumber;
@@ -337,6 +401,8 @@ int main()
                         std::cout << "Serial Number: " << serialNumber << '\n';
                         std::wcout << "File System: " << fileSystem << '\n';
                         std::cout << "Drive Index: " << drive_index << '\n';
+                        auto m = SizeToHumanReadable(drive_size, 0, 1);
+
                         std::cout << "Drive Size: " << drive_size << '\n';
                         std::cout << "==========================================================\n";
                     }
