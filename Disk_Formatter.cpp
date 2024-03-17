@@ -386,5 +386,22 @@ int main()
 /*Note to self 17/03
 *
 * For right formatting function i will need to keep the storage size of the device
+* 
+* -----> Formatting:
+* 
+*   1. Delete partition
+*           implement : GetVdsDiskInterface(DriveIndex, &IID_IVdsAdvancedDisk, (void**)&pAdvancedDisk, bSilent))
+*   2.	AnalyzeMBR(hPhysicalDrive, "Drive", FALSE);
+* 
+*   3. if ((!ClearMBRGPT(hPhysicalDrive, SelectedDrive.DiskSize, SelectedDrive.SectorSize, use_large_fat32)) ||
+			(!InitializeDisk(hPhysicalDrive)))
+
+    4. CreatePartition(hPhysicalDrive, partition_type, fs_type, (partition_type == PARTITION_STYLE_MBR)
+		&& (target_type == TT_UEFI), extra_partitions)) {
+
+    5. Format partition 
+        implement: FormatLargeFAT32
+
+   6. !RemountVolume(drive_name, FALSE)
 
 */
