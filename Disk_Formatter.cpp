@@ -381,3 +381,10 @@ int main()
 * Probably i will not need device id -> evint_detail_data->DevicePath, should be enough. I think i should only keep this and open deivce using it
 
 */
+
+
+/*Note to self 17/03
+*
+* For right formatting function i will need to keep the storage size of the device
+
+*/
