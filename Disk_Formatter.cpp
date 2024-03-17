@@ -69,7 +69,20 @@ inline BOOL IsRemovable(const char* buffer)
         return FALSE;
     }
 }
+uint64_t GetDriveSize(HANDLE& hDrive)
+{
+    BOOL r;
+    DWORD size;
+    BYTE geometry[256];
+    PDISK_GEOMETRY_EX DiskGeometry = (PDISK_GEOMETRY_EX)(void*)geometry;
 
+    r = DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
+        NULL, 0, geometry, sizeof(geometry), &size, NULL);
+
+    if (!r || size <= 0)
+        return 0;
+    return DiskGeometry->DiskSize.QuadPart;
+}
 int GetDriveNumber(HANDLE hDrive, char* path)
 {
     STORAGE_DEVICE_NUMBER_REDEF DeviceNumber;
@@ -294,7 +307,7 @@ int main()
                     std::cout << j << " invalid" << '\n';
                     break;
                 }
-
+                uint64_t drive_size = GetDriveSize(hDrive);
                 drive_number = GetDriveNumber(hDrive, devint_detail_data->DevicePath);
                 if (drive_number < 0)
                     continue;
@@ -324,6 +337,7 @@ int main()
                         std::cout << "Serial Number: " << serialNumber << '\n';
                         std::wcout << "File System: " << fileSystem << '\n';
                         std::cout << "Drive Index: " << drive_index << '\n';
+                        std::cout << "Drive Size: " << drive_size << '\n';
                         std::cout << "==========================================================\n";
                     }
                 }
