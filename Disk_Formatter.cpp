@@ -386,6 +386,9 @@ int main()
 /*Note to self 17/03
 *
 * For right formatting function i will need to keep the storage size of the device
+*    --> implement: GetDriveSize and get value  then send it to 
+*                   SizeToHumanReadable ->from this we get smth like 16GB 
+* 
 * 
 * -----> Formatting:
 * 
