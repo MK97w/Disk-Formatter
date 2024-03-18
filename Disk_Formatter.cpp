@@ -10,7 +10,8 @@
 #include <array>
 #include <io.h> 
 #include <fcntl.h> 
-#include "localization.h"
+#include <string>
+#include <sstream>
 
 #pragma comment(lib, "Setupapi.lib")
 
@@ -34,7 +35,13 @@
 #define MSG_000                         3000
 #define MSG_MAX                         3351
 
-
+template <typename T>
+std::string ToString(T val)
+{
+    std::stringstream stream;
+    stream << val;
+    return stream.str();
+}
 
 static __inline uint16_t upo2(uint16_t v)
 {
@@ -107,17 +114,18 @@ uint64_t GetDriveSize(HANDLE& hDrive)
 }
 
 
-char* SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units)
+std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units)
 {
-    char** msg_table = NULL;
-    char* default_msg_table[MSG_MAX - MSG_000];
+
+   const char* default_msg_table[MSG_MAX - MSG_000] = { "%s", 0 };
     int suffix;
     static char str_size[32];
+    std::string res{ };
     const char* dir = "";
     double hr_size = (double)size;
     double t;
     uint16_t i_size;
-    char** _msg_table = copy_to_log ? default_msg_table : msg_table;
+   const char** _msg_table = default_msg_table;
     const double divider = fake_units ? 1000.0 : 1024.0;
 
     for (suffix = 0; suffix < 6 - 1; suffix++) {
@@ -136,14 +144,20 @@ char* SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units)
         else {
             t = (double)upo2((uint16_t)hr_size);
             i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
-            static_sprintf(str_size, "%s%d%s %s", dir, i_size, dir, _msg_table[MSG_020 + suffix - MSG_000]);
+            res = std::to_string(static_cast<int>(i_size));
+            if (suffix == 3) 
+                res += " GB";
+            else if (suffix == 4)
+                res += " TB";
+            else if (suffix == 2)
+                res += " MB";
         }
     }
     else {
         static_sprintf(str_size, (hr_size * 10.0 - (floor(hr_size) * 10.0)) < 0.5 ?
             "%s%0.0f%s %s" : "%s%0.1f%s %s", dir, hr_size, dir, _msg_table[MSG_020 + suffix - MSG_000]);
     }
-    return str_size;
+    return res;
 }
 
 
@@ -219,7 +233,7 @@ void listAllVolumeInfo()
                 std::wcout << "Volume Name: " << volumeName << '\n';
                 std::wcout << "Serial Number: " << serialNumber << '\n';
                 std::wcout << "File System: " << fileSystem << '\n';
-
+                std::wcout << "CMP length: " << maxComponentLength << '\n';
             }
             else
                 std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
@@ -236,7 +250,7 @@ void listAllVolumeInfo()
 
 int main()
 {
-   // listAllVolumeInfo();
+   //listAllVolumeInfo();
 
       setlocale(LC_ALL, "Turkish");
 
@@ -394,16 +408,14 @@ int main()
 
                     if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
                     {
-                        std::cout << "==========================================================\n";
                         CloseHandle(hDrive);
+                        std::cout << "==========================================================\n";
                         std::cout << "Drive Label : " << drive_name << '\n';
                         std::wcout << "Drive Name: " << volumeName << '\n';
                         std::cout << "Serial Number: " << serialNumber << '\n';
                         std::wcout << "File System: " << fileSystem << '\n';
-                        std::cout << "Drive Index: " << drive_index << '\n';
-                        auto m = SizeToHumanReadable(drive_size, 0, 1);
-
-                        std::cout << "Drive Size: " << drive_size << '\n';
+                       // std::cout << "Drive Index: " << drive_index << '\n';
+                        std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
                         std::cout << "==========================================================\n";
                     }
                 }
@@ -489,8 +501,12 @@ int main()
 
 */
 
-/*Note to self 18 / 03
+/*  
+*    Note to self 18 / 03
+*  -
+* 
+*   Bug on Terrabyte 
+*   Bug on multiple devices on SD Card reader
 * 
 * 
-* 
-* /
+*/
