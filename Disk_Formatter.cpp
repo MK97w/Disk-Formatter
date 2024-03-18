@@ -10,7 +10,7 @@
 #include <array>
 #include <io.h> 
 #include <fcntl.h> 
-
+#include "localization.h"
 
 #pragma comment(lib, "Setupapi.lib")
 
@@ -113,7 +113,7 @@ char* SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units)
     char* default_msg_table[MSG_MAX - MSG_000];
     int suffix;
     static char str_size[32];
-    const char* dir = ((0) && (!copy_to_log)) ? LEFT_TO_RIGHT_MARK : "";
+    const char* dir = "";
     double hr_size = (double)size;
     double t;
     uint16_t i_size;
@@ -488,3 +488,9 @@ int main()
    6. !RemountVolume(drive_name, FALSE)
 
 */
+
+/*Note to self 18 / 03
+* 
+* 
+* 
+* /
