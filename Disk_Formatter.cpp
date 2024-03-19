@@ -136,10 +136,23 @@ std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units
     if (suffix == 0) {
         static_sprintf(str_size, "%s%d%s %s", dir, (int)hr_size, dir, _msg_table[MSG_020 - MSG_000]);
     }
-    else if (fake_units) {
-        if (hr_size < 8) {
-            static_sprintf(str_size, (fabs((hr_size * 10.0) - (floor(hr_size + 0.5) * 10.0)) < 0.5) ? "%0.0f%s" : "%0.1f%s",
-                hr_size, _msg_table[MSG_020 + suffix - MSG_000]);
+    else if (fake_units) 
+    {
+        if (hr_size < 8) // 1-8 terrabyte a kadar buraya girecek 
+        {
+            //static_sprintf(str_size, (fabs((hr_size * 10.0) - (floor(hr_size + 0.5) * 10.0)) < 0.5) ? "%0.0f%s" : "%0.1f%s",
+              //  hr_size, _msg_table[MSG_020 + suffix - MSG_000]);
+
+            t = (double)upo2((uint16_t)hr_size);
+            i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
+            res = std::to_string(static_cast<int>(i_size));
+            if (suffix == 3)
+                res += " GB";
+            else if (suffix == 4)
+                res += " TB";
+            else if (suffix == 2)
+                res += " MB";
+
         }
         else {
             t = (double)upo2((uint16_t)hr_size);
@@ -399,8 +412,8 @@ int main()
                 }
                 else
                 {
-                    //drive_name[0] = drives[i * 4];
-                    drive_name[0] = drives[8];
+                    drive_name[0] = drives[i * 4];
+                   // drive_name[0] = drives[8];
 
                     _TCHAR drivePath[4];
              
@@ -517,6 +530,7 @@ int main()
 *  -
 *
 *   Terrabyte storage cannot be detected by its own
+*     Bug on multiple devices caused by mislabeling while polling through whole drive names.
 *
 *
 */
