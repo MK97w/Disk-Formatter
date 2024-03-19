@@ -399,7 +399,8 @@ int main()
                 }
                 else
                 {
-                    drive_name[0] = drives[i * 4];
+                    //drive_name[0] = drives[i * 4];
+                    drive_name[0] = drives[8];
 
                     _TCHAR drivePath[4];
              
@@ -509,4 +510,13 @@ int main()
 *   Bug on multiple devices on SD Card reader
 * 
 * 
+*/
+
+/*
+*    Note to self 19 / 03
+*  -
+*
+*   Terrabyte storage cannot be detected by its own
+*
+*
 */
