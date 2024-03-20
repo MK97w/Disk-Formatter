@@ -534,3 +534,11 @@ int main()
 *
 *
 */
+
+/*
+*    Note to self 20 / 03
+*  
+*     Bug on multiple devices caused by mislabeling while polling through whole drive names. add i+4 if disk is eliminated
+*
+*
+*/
