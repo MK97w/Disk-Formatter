@@ -212,16 +212,24 @@ void listAllVolumeInfo()
     _TCHAR buffer[MAX_PATH];
     _TCHAR buffer2[MAX_PATH];
     DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer), data_type, size;
-
+    HDEVINFO dev_info = NULL;
+    SP_DEVINFO_DATA dev_info_data;
+    SP_DEVICE_INTERFACE_DATA devint_data;
+    PSP_DEVICE_INTERFACE_DETAIL_DATA_A devint_detail_data;
+  
     if (drives == 0)
     {
         std::cerr << "Error getting logical drives. Error code: " << GetLastError() << std::endl;
     }
+
+    dev_info = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+    dev_info_data.cbSize = sizeof(dev_info_data);
+
     std::cout << "==========================================================\n";
+  
     // Iterate through each drive
     for (DWORD i = 0; i < drives; i++)
     {
-
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
 
         // Check if the drive is a removable drive (e.g., SD card)
@@ -239,17 +247,39 @@ void listAllVolumeInfo()
             DWORD fileSystemFlags;
 
 
-
+            memset(buffer2, 0, sizeof(buffer2));
+            devint_data.cbSize = sizeof(devint_data);
+            devint_detail_data = NULL;
+           
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
+                safe_free(devint_detail_data);
+                SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data);
+
+                if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, NULL, 0, &size, NULL)) {
+                    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) 
+                    {
+                        devint_detail_data = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size);
+                        if (devint_detail_data == NULL)
+                        {
+                            continue;
+                        }
+                        devint_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+                    }
+                    else 
+                    {
+                        continue;
+                    }
+                }
+                SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, devint_detail_data, size, &size, NULL);
 
                 std::wcout << "Volume Name: " << volumeName << '\n';
                 std::wcout << "Serial Number: " << serialNumber << '\n';
                 std::wcout << "File System: " << fileSystem << '\n';
-                std::wcout << "CMP length: " << maxComponentLength << '\n';
             }
             else
                 std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
+            
             std::cout << "==========================================================\n";
         }
 
@@ -265,7 +295,7 @@ int main()
 {
    //listAllVolumeInfo();
 
-      setlocale(LC_ALL, "Turkish");
+     setlocale(LC_ALL, "Turkish");
 
 
         // List of USB storage drivers we know - list may be incomplete!
@@ -442,6 +472,7 @@ int main()
         }
 
     }
+    
 }
 
 
