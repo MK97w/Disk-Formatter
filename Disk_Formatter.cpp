@@ -223,16 +223,19 @@ void listAllVolumeInfo()
     }
 
     dev_info = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+    if (dev_info == INVALID_HANDLE_VALUE)
+    {
+        std::cout << "aa";
+    }
     dev_info_data.cbSize = sizeof(dev_info_data);
 
     std::cout << "==========================================================\n";
   
     // Iterate through each drive
-    for (DWORD i = 0; i < drives; i++)
+    for (DWORD i = 0; i < drives && SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data); i++)
     {
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
 
-        // Check if the drive is a removable drive (e.g., SD card)
         UINT driveType = GetDriveType(drivePath);
 
         if (driveType == DRIVE_REMOVABLE)
@@ -247,32 +250,8 @@ void listAllVolumeInfo()
             DWORD fileSystemFlags;
 
 
-            memset(buffer2, 0, sizeof(buffer2));
-            devint_data.cbSize = sizeof(devint_data);
-            devint_detail_data = NULL;
-           
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
-                safe_free(devint_detail_data);
-                SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data);
-
-                if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, NULL, 0, &size, NULL)) {
-                    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) 
-                    {
-                        devint_detail_data = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size);
-                        if (devint_detail_data == NULL)
-                        {
-                            continue;
-                        }
-                        devint_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
-                    }
-                    else 
-                    {
-                        continue;
-                    }
-                }
-                SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, devint_detail_data, size, &size, NULL);
-
                 std::wcout << "Volume Name: " << volumeName << '\n';
                 std::wcout << "Serial Number: " << serialNumber << '\n';
                 std::wcout << "File System: " << fileSystem << '\n';
@@ -293,8 +272,8 @@ void listAllVolumeInfo()
 
 int main()
 {
-   //listAllVolumeInfo();
-
+   listAllVolumeInfo();
+   /*
      setlocale(LC_ALL, "Turkish");
 
 
@@ -369,110 +348,108 @@ int main()
 
     // Now use SetupDi to enumerate all our disk storage devices
     dev_info = SetupDiGetClassDevsA(&GUID_DEVINTERFACE_DISK, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
-
     dev_info_data.cbSize = sizeof(dev_info_data);
     for (i = 0; num_drives < 64 && SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data); i++)
     {
-        memset(buffer, 0, sizeof(buffer));
-        if (!SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME,
-            &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
-            continue;
-        }
-        if (SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
-            &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer))
-        {
-
             memset(buffer, 0, sizeof(buffer));
-            devint_data.cbSize = sizeof(devint_data);
-            devint_detail_data = NULL;
-
-            for (j = 0; ; j++)
+            if (!SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME,
+                &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
+                continue;
+            }
+            if (SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
+                &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer))
             {
-                safe_free(devint_detail_data);
 
-                if (!SetupDiEnumDeviceInterfaces(dev_info, &dev_info_data, &GUID_DEVINTERFACE_DISK, j, &devint_data)) {
-                    if (GetLastError() != ERROR_NO_MORE_ITEMS)
-                    {
-                    }
-                    else {
-                    }
-                    break;
-                }
+                memset(buffer, 0, sizeof(buffer));
+                devint_data.cbSize = sizeof(devint_data);
+                devint_detail_data = NULL;
 
-                if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, NULL, 0, &size, NULL)) {
-                    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-                        devint_detail_data = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size);
-                        if (devint_detail_data == NULL)
+                for (j = 0; ; j++)
+                {
+                    safe_free(devint_detail_data);
+
+                    if (!SetupDiEnumDeviceInterfaces(dev_info, &dev_info_data, &GUID_DEVINTERFACE_DISK, j, &devint_data)) {
+                        if (GetLastError() != ERROR_NO_MORE_ITEMS)
                         {
+                        }
+                        else {
+                        }
+                        break;
+                    }
+
+                    if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, NULL, 0, &size, NULL)) {
+                        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                            devint_detail_data = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size);
+                            if (devint_detail_data == NULL)
+                            {
+                                continue;
+                            }
+                            devint_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+                        }
+                        else {
                             continue;
                         }
-                        devint_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
                     }
-                    else {
+                    if (devint_detail_data == NULL) {
                         continue;
                     }
-                }
-                if (devint_detail_data == NULL) {
-                    continue;
-                }
-                if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, devint_detail_data, size, &size, NULL)) {
+                    if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, devint_detail_data, size, &size, NULL)) {
 
-                    continue;
-                }
+                        continue;
+                    }
 
-                hDrive = CreateFileA(devint_detail_data->DevicePath, 0,
-                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-                if (hDrive == INVALID_HANDLE_VALUE) {
-                    const DWORD error = GetLastError();
-                    std::cout << error << '\n';
-                    std::cout << j << " invalid" << '\n';
-                    break;
-                }
-                uint64_t drive_size = GetDriveSize(hDrive);
-                drive_number = GetDriveNumber(hDrive, devint_detail_data->DevicePath);
-                if (drive_number < 0)
-                    continue;
-                drive_index = drive_number + 128;
-                BYTE geometry[128];
-                if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
-                    NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0))
-                {
-                    CloseHandle(hDrive);
-                    break;
-                }
-                else
-                {
-                    drive_name[0] = drives[i * 4];
-                   // drive_name[0] = drives[8];
-
-                    _TCHAR drivePath[4];
-             
-                    int written = MultiByteToWideChar(CP_ACP, 0, drive_name, 4, drivePath, 4);
-
-
-                    if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
+                    hDrive = CreateFileA(devint_detail_data->DevicePath, 0,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                    if (hDrive == INVALID_HANDLE_VALUE) {
+                        const DWORD error = GetLastError();
+                        std::cout << error << '\n';
+                        std::cout << j << " invalid" << '\n';
+                        break;
+                    }
+                    uint64_t drive_size = GetDriveSize(hDrive);
+                    drive_number = GetDriveNumber(hDrive, devint_detail_data->DevicePath);
+                    if (drive_number < 0)
+                        continue;
+                    drive_index = drive_number + 128;
+                    BYTE geometry[128];
+                    if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
+                        NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0))
                     {
                         CloseHandle(hDrive);
-                        std::cout << "==========================================================\n";
-                        std::cout << "Drive Label : " << drive_name << '\n';
-                        std::wcout << "Drive Name: " << volumeName << '\n';
-                        std::cout << "Serial Number: " << serialNumber << '\n';
-                        std::wcout << "File System: " << fileSystem << '\n';
-                       // std::cout << "Drive Index: " << drive_index << '\n';
-                        std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
-                        std::cout << "==========================================================\n";
+                        break;
+                    }
+                    else
+                    {
+                        drive_name[0] = drives[i * 4];
+                        // drive_name[0] = drives[8];
+
+                        _TCHAR drivePath[4];
+
+                        int written = MultiByteToWideChar(CP_ACP, 0, drive_name, 4, drivePath, 4);
+
+
+                        if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
+                        {
+                            CloseHandle(hDrive);
+                            std::cout << "==========================================================\n";
+                            std::cout << "Drive Label : " << drive_name << '\n';
+                            std::wcout << "Drive Name: " << volumeName << '\n';
+                            std::cout << "Serial Number: " << serialNumber << '\n';
+                            std::wcout << "File System: " << fileSystem << '\n';
+                            // std::cout << "Drive Index: " << drive_index << '\n';
+                            std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
+                            std::cout << "==========================================================\n";
+                        }
                     }
                 }
-            }
-    
-        }
-        else
-        {
-            continue;
-        }
 
+            }
+            else
+            {
+                continue;
+            }
     }
-    
+    */
 }
 
 
