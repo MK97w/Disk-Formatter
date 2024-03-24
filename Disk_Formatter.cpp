@@ -216,7 +216,8 @@ void listAllVolumeInfo()
     SP_DEVINFO_DATA dev_info_data;
     SP_DEVICE_INTERFACE_DATA devint_data;
     PSP_DEVICE_INTERFACE_DETAIL_DATA_A devint_detail_data;
-  
+    HANDLE hDrive;
+
     if (drives == 0)
     {
         std::cerr << "Error getting logical drives. Error code: " << GetLastError() << std::endl;
@@ -230,9 +231,9 @@ void listAllVolumeInfo()
     dev_info_data.cbSize = sizeof(dev_info_data);
 
     std::cout << "==========================================================\n";
-  
+
     // Iterate through each drive
-    for (DWORD i = 0; i < drives && SetupDiEnumDeviceInfo(dev_info, i/4, &dev_info_data); i+=4 )
+    for (DWORD i = 0; i < drives && SetupDiEnumDeviceInfo(dev_info, i / 4, &dev_info_data); i += 4)
     {
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
 
@@ -240,8 +241,6 @@ void listAllVolumeInfo()
 
         if (driveType == DRIVE_REMOVABLE)
         {
-            std::wcout << "Removable drive found: " << drivePath << '\n';
-
             // Get volume information
             _TCHAR volumeName[MAX_PATH];
             _TCHAR fileSystem[MAX_PATH];
@@ -256,12 +255,12 @@ void listAllVolumeInfo()
                 devint_data.cbSize = sizeof(devint_data);
                 devint_detail_data = NULL;
 
-                if (!SetupDiEnumDeviceInterfaces(dev_info, &dev_info_data, &GUID_DEVINTERFACE_DISK, i/4, &devint_data))
+                if (!SetupDiEnumDeviceInterfaces(dev_info, &dev_info_data, &GUID_DEVINTERFACE_DISK, 0, &devint_data))
                 {
                     if (GetLastError() != ERROR_NO_MORE_ITEMS)
                     {
                     }
-                    else 
+                    else
                     {
                     }
                     //break;
@@ -288,23 +287,45 @@ void listAllVolumeInfo()
 
                     continue;
                 }
+                hDrive = CreateFileA(devint_detail_data->DevicePath, 0,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                if (hDrive == INVALID_HANDLE_VALUE) {
+                    const DWORD error = GetLastError();
+                    std::cout << error << '\n';
+                    break;
+                }
+                uint64_t drive_size = GetDriveSize(hDrive);
 
-                std::wcout << "Volume Name: " << volumeName << '\n';
-                std::wcout << "Serial Number: " << serialNumber << '\n';
-                std::wcout << "File System: " << fileSystem << '\n';
+                BYTE geometry[128];
+                if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
+                    NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0))
+                {
+                    CloseHandle(hDrive);
+                }
+                else
+                {
+                    if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
+                    {
+                        CloseHandle(hDrive);
+                        std::wcout <<"Drive Path: " << drivePath << '\n';
+                        std::wcout << "Drive Name: " << volumeName << '\n';
+                        std::cout << "Serial Number: " << serialNumber << '\n';
+                        std::wcout << "File System: " << fileSystem << '\n';
+                        // std::cout << "Drive Index: " << drive_index << '\n';
+                        std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
+                    }
+                    else
+                        std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
+
+                    std::cout << "==========================================================\n";
+                }
             }
-            else
-                std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
-            
-            std::cout << "==========================================================\n";
+
         }
 
     }
-
 }
 
-
-//std::array<Device, 64> candidateDevices;
 
 
 int main()
