@@ -232,7 +232,7 @@ void listAllVolumeInfo()
     std::cout << "==========================================================\n";
   
     // Iterate through each drive
-    for (DWORD i = 0; i < drives && SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data); i++)
+    for (DWORD i = 0; i < drives && SetupDiEnumDeviceInfo(dev_info, i/4, &dev_info_data); i+=4 )
     {
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
 
@@ -252,6 +252,43 @@ void listAllVolumeInfo()
 
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
+                memset(buffer2, 0, sizeof(buffer2));
+                devint_data.cbSize = sizeof(devint_data);
+                devint_detail_data = NULL;
+
+                if (!SetupDiEnumDeviceInterfaces(dev_info, &dev_info_data, &GUID_DEVINTERFACE_DISK, i/4, &devint_data))
+                {
+                    if (GetLastError() != ERROR_NO_MORE_ITEMS)
+                    {
+                    }
+                    else 
+                    {
+                    }
+                    //break;
+                    std::cout << "brrt";
+                }
+
+                if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, NULL, 0, &size, NULL)) {
+                    if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+                        devint_detail_data = (PSP_DEVICE_INTERFACE_DETAIL_DATA_A)calloc(1, size);
+                        if (devint_detail_data == NULL)
+                        {
+                            continue;
+                        }
+                        devint_detail_data->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_A);
+                    }
+                    else {
+                        continue;
+                    }
+                }
+                if (devint_detail_data == NULL) {
+                    continue;
+                }
+                if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, devint_detail_data, size, &size, NULL)) {
+
+                    continue;
+                }
+
                 std::wcout << "Volume Name: " << volumeName << '\n';
                 std::wcout << "Serial Number: " << serialNumber << '\n';
                 std::wcout << "File System: " << fileSystem << '\n';
