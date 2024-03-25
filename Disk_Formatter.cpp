@@ -233,8 +233,9 @@ void listAllVolumeInfo()
     std::cout << "==========================================================\n";
 
     // Iterate through each drive
-    for (DWORD i = 0; i < drives && SetupDiEnumDeviceInfo(dev_info, i / 4, &dev_info_data); i += 4)
+    for (DWORD i = 0; i < drives && SetupDiEnumDeviceInfo(dev_info, i/4, &dev_info_data); i += 4)
     {
+        std::cout << i;
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
 
         UINT driveType = GetDriveType(drivePath);
@@ -331,9 +332,9 @@ void listAllVolumeInfo()
 int main()
 {
    listAllVolumeInfo();
-   /*
-     setlocale(LC_ALL, "Turkish");
-
+   
+   /*  setlocale(LC_ALL, "Turkish");
+     int prefix = 0;
 
         // List of USB storage drivers we know - list may be incomplete!
     const char* usbstor_name[] = {
@@ -409,6 +410,7 @@ int main()
     dev_info_data.cbSize = sizeof(dev_info_data);
     for (i = 0; num_drives < 64 && SetupDiEnumDeviceInfo(dev_info, i, &dev_info_data); i++)
     {
+            
             memset(buffer, 0, sizeof(buffer));
             if (!SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME,
                 &data_type, (LPBYTE)buffer, sizeof(buffer), &size)) {
@@ -432,7 +434,7 @@ int main()
                         }
                         else {
                         }
-                        break;
+                        break; // E den sonra buraya geldik! i değerim hala 3
                     }
 
                     if (!SetupDiGetDeviceInterfaceDetailA(dev_info, &devint_data, NULL, 0, &size, NULL)) {
@@ -506,8 +508,8 @@ int main()
             {
                 continue;
             }
-    }
-    */
+    }*/
+    
 }
 
 
@@ -605,6 +607,14 @@ int main()
 *    Note to self 20 / 03
 *  
 *     Bug on multiple devices caused by mislabeling while polling through whole drive names. add i+4 if disk is eliminated
+*
+*
+*/
+
+/*
+*    Note to self 25 / 03
+*
+*     Still polling and opening handle to wrong device. i+=4 probably causes error
 *
 *
 */
