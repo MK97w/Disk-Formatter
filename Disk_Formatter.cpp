@@ -316,7 +316,7 @@ void listAllVolumeInfo()
                     }
                     else
                         std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
-
+                    safe_free(devint_detail_data);
                     std::cout << "==========================================================\n";
                 }
             }
