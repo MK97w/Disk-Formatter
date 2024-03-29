@@ -11,6 +11,7 @@
 #include <io.h> 
 #include <fcntl.h> 
 #include <string>
+#include <unordered_map>
 #include <sstream>
 
 
@@ -22,6 +23,8 @@
 #define MSG_020                         3020
 #define MSG_000                         3000
 #define MSG_MAX                         3351
+
+std::unordered_map<int, LPCWSTR>devices;
 
 template <typename T>
 std::string ToString(T val)
@@ -127,6 +130,7 @@ void listAllVolumeInfo()
     _TCHAR buffer[MAX_PATH];
     DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer), data_type, size;
     HANDLE hDrive;
+    int foundDevices{ 0 };
 
     if (drives == 0)
     {
@@ -142,7 +146,7 @@ void listAllVolumeInfo()
 
         UINT driveType = GetDriveType(drivePath);
 
-        if (driveType == DRIVE_REMOVABLE && driveType != DRIVE_FIXED)
+        if (driveType == DRIVE_REMOVABLE  && driveType != DRIVE_FIXED)
         {
             // Get volume information
             _TCHAR volumeName[MAX_PATH];
@@ -153,7 +157,8 @@ void listAllVolumeInfo()
 
 
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
-            {
+            {   
+                foundDevices++;
                 std::string path = "\\\\.\\";
                 path.append( 1, static_cast<char>(drivePath[0])); 
                 path+= ":";
@@ -180,6 +185,7 @@ void listAllVolumeInfo()
                     if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
                     {
                         CloseHandle(hDrive);
+                        devices[foundDevices] = wideString;
                         std::wcout <<"Drive Path: " << drivePath << '\n';
                         std::wcout << "Drive Name: " << volumeName << '\n';
                         std::wcout << "File System: " << fileSystem << '\n';
