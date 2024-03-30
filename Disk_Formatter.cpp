@@ -14,6 +14,9 @@
 #include <unordered_map>
 #include <sstream>
 
+#include <Vds.h> // Include the VDS header file
+#pragma comment(lib, "vds.lib") // Link against the VDS library
+
 
 
 #define safe_sprintf(dst, count, ...) do {_snprintf(dst, count, __VA_ARGS__); (dst)[(count)-1] = 0; } while(0)
@@ -209,7 +212,26 @@ int main()
    listAllVolumeInfo();
    
    
-    
+   HRESULT hr = CoInitialize(NULL);
+   if (FAILED(hr)) {
+       std::cerr << "Failed to initialize COM.\n";
+       return 1;
+   }
+
+   IVdsVolumeMF2* pVolumeMF2 = NULL;
+   VDS_FILE_SYSTEM_TYPE fileSystemType = VDS_FST_FAT32;
+   DWORD clusterSize = 4096; // Cluster size for the formatted volume
+  // DWORD options = VDS_FS_FORMAT_DEFAULT; // Format options
+   hr = pVolumeMF2->FormatEx(fileSystemType, clusterSize, L"FAT32", L"MyDriveLabel");
+   if (FAILED(hr)) {
+       std::cerr << "Failed to format volume.\n";
+   }
+   else {
+       std::cout << "Volume formatted successfully.\n";
+   }
+
+   pVolumeMF2->Release();
+   CoUninitialize();
 }
 
 
