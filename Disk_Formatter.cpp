@@ -219,10 +219,18 @@ int main()
    }
 
    IVdsVolumeMF2* pVolumeMF2 = NULL;
-   VDS_FILE_SYSTEM_TYPE fileSystemType = VDS_FST_FAT32;
-   DWORD clusterSize = 4096; // Cluster size for the formatted volume
-  // DWORD options = VDS_FS_FORMAT_DEFAULT; // Format options
-   hr = pVolumeMF2->FormatEx(fileSystemType, clusterSize, L"FAT32", L"MyDriveLabel");
+   LPWSTR pwszFileSystemTypeName = L"FAT32"; // File system type name
+   USHORT usFileSystemRevision = 0; // File system revision (0 for default)
+   ULONG ulDesiredUnitAllocationSize = 0; // Desired unit allocation size (0 for default)
+   LPWSTR pwszLabel = L"MyDriveLabel"; // Volume label
+   BOOL bForce = FALSE; // Force formatting flag
+   BOOL bQuickFormat = TRUE; // Quick format flag
+   BOOL bEnableCompression = FALSE; // Enable compression flag
+   IVdsAsync* pAsync = NULL; // Asynchronous operation pointer
+
+   hr = pVolumeMF2->FormatEx(pwszFileSystemTypeName, usFileSystemRevision, ulDesiredUnitAllocationSize,
+       pwszLabel, bForce, bQuickFormat, bEnableCompression, &pAsync);
+
    if (FAILED(hr)) {
        std::cerr << "Failed to format volume.\n";
    }
