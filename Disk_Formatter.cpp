@@ -27,6 +27,9 @@
 #define MSG_000                         3000
 #define MSG_MAX                         3351
 
+#define utf8_to_wchar_no_alloc(src, wdest, wdest_size) \
+	MultiByteToWideChar(CP_UTF8, 0, src, -1, wdest, wdest_size)
+#define sfree(p) do {if (p != NULL) {free((void*)(p)); p = NULL;}} while(0)
 std::unordered_map<int, LPCWSTR>devices;
 
 template <typename T>
@@ -48,7 +51,32 @@ static __inline uint16_t upo2(uint16_t v)
     return v;
 }
 
+static __inline wchar_t* utf8_to_wchar(const char* str)
+{
+    int size = 0;
+    wchar_t* wstr = NULL;
 
+    if (str == NULL)
+        return NULL;
+
+    // Convert the empty string too
+    if (str[0] == 0)
+        return (wchar_t*)calloc(1, sizeof(wchar_t));
+
+    // Find out the size we need to allocate for our converted string
+    size = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
+    if (size <= 1)	// An empty string would be size 1
+        return NULL;
+
+    if ((wstr = (wchar_t*)calloc(size, sizeof(wchar_t))) == NULL)
+        return NULL;
+
+    if (utf8_to_wchar_no_alloc(str, wstr, size) != size) {
+        sfree(wstr);
+        return NULL;
+    }
+    return wstr;
+}
 
 uint64_t GetDriveSize(HANDLE& hDrive)
 {
@@ -216,9 +244,9 @@ int main()
    if (FAILED(hr)) {
        std::cerr << "Failed to initialize COM.\n";
        return 1;
-   }
-
+   }   
    IVdsVolumeMF2* pVolumeMF2 = NULL;
+
    LPWSTR pwszFileSystemTypeName = L"FAT32"; // File system type name
    USHORT usFileSystemRevision = 0; // File system revision (0 for default)
    ULONG ulDesiredUnitAllocationSize = 0; // Desired unit allocation size (0 for default)
@@ -227,6 +255,10 @@ int main()
    BOOL bQuickFormat = TRUE; // Quick format flag
    BOOL bEnableCompression = FALSE; // Enable compression flag
    IVdsAsync* pAsync = NULL; // Asynchronous operation pointer
+   LPCSTR FSName = "FAT32";
+   LPCSTR Label = "mert";
+
+   CHAR* wVolumeName = NULL, * wLabel = utf8_to_wchar(Label), * wFSName = utf8_to_wchar(FSName);
 
    hr = pVolumeMF2->FormatEx(pwszFileSystemTypeName, usFileSystemRevision, ulDesiredUnitAllocationSize,
        pwszLabel, bForce, bQuickFormat, bEnableCompression, &pAsync);
@@ -242,6 +274,13 @@ int main()
    CoUninitialize();
 }
 
+
+/*
+
+
+
+
+*/
 
 /*
 * Note to self:
