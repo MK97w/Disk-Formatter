@@ -240,7 +240,8 @@ int main()
 {
    listAllVolumeInfo();
    
-   
+   USES_CONVERSION_EX;
+
    HRESULT hr = CoInitialize(NULL);
    if (FAILED(hr)) {
        std::cerr << "Failed to initialize COM.\n";
@@ -260,7 +261,8 @@ int main()
 
 
    LPWSTR pwszFileSystemTypeName = A2W_EX(s_pwszFileSystemTypeName.c_str(), s_pwszFileSystemTypeName.length());
-  // LPWSTR pwszLabel;
+   LPWSTR pwszLabel = A2W_EX(s_pwszFileSystemTypeName.c_str(), s_pwszFileSystemTypeName.length());
+
 
 
    hr = pVolumeMF2->FormatEx(pwszFileSystemTypeName, usFileSystemRevision, ulDesiredUnitAllocationSize,
@@ -275,6 +277,13 @@ int main()
 
    pVolumeMF2->Release();
    CoUninitialize();
+
+
+
+
+
+
+
 }
 
 
@@ -392,7 +401,8 @@ BOOL bEnableCompression,
 /*
 *    Note to self 25 / 03
 *
-*     Still polling and opening handle to wrong device. i+=4 probably causes error
+*    The FormatEx method itself doesn't "know" which volume or drive it is formatting directly. 
+Instead, it relies on the volume object (IVdsVolumeMF2) that you pass to it as a parameter to determine which volume to format
 *
 *
 */
