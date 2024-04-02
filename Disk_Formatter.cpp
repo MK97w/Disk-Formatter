@@ -13,10 +13,9 @@
 #include <string>
 #include <unordered_map>
 #include <sstream>
-#include <atlconv.h>
 
 #include <Vds.h> // Include the VDS header file
-#pragma comment(lib, "vds.lib") // Link against the VDS library
+//#pragma comment(lib, "vds.lib") // Link against the VDS library
 
 
 
@@ -28,9 +27,6 @@
 #define MSG_000                         3000
 #define MSG_MAX                         3351
 
-#define utf8_to_wchar_no_alloc(src, wdest, wdest_size) \
-	MultiByteToWideChar(CP_UTF8, 0, src, -1, wdest, wdest_size)
-#define sfree(p) do {if (p != NULL) {free((void*)(p)); p = NULL;}} while(0)
 std::unordered_map<int, LPCWSTR>devices;
 
 template <typename T>
@@ -52,32 +48,7 @@ static __inline uint16_t upo2(uint16_t v)
     return v;
 }
 
-static __inline wchar_t* utf8_to_wchar(const char* str)
-{
-    int size = 0;
-    wchar_t* wstr = NULL;
 
-    if (str == NULL)
-        return NULL;
-
-    // Convert the empty string too
-    if (str[0] == 0)
-        return (wchar_t*)calloc(1, sizeof(wchar_t));
-
-    // Find out the size we need to allocate for our converted string
-    size = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
-    if (size <= 1)	// An empty string would be size 1
-        return NULL;
-
-    if ((wstr = (wchar_t*)calloc(size, sizeof(wchar_t))) == NULL)
-        return NULL;
-
-    if (utf8_to_wchar_no_alloc(str, wstr, size) != size) {
-        sfree(wstr);
-        return NULL;
-    }
-    return wstr;
-}
 
 uint64_t GetDriveSize(HANDLE& hDrive)
 {
@@ -98,7 +69,7 @@ uint64_t GetDriveSize(HANDLE& hDrive)
 std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units)
 {
 
-   const char* default_msg_table[MSG_MAX - MSG_000] = { "%s", 0 };
+    const char* default_msg_table[MSG_MAX - MSG_000] = { "%s", 0 };
     int suffix;
     static char str_size[32];
     std::string res{ };
@@ -106,7 +77,7 @@ std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units
     double hr_size = (double)size;
     double t;
     uint16_t i_size;
-   const char** _msg_table = default_msg_table;
+    const char** _msg_table = default_msg_table;
     const double divider = fake_units ? 1000.0 : 1024.0;
 
     for (suffix = 0; suffix < 6 - 1; suffix++) {
@@ -117,7 +88,7 @@ std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units
     if (suffix == 0) {
         static_sprintf(str_size, "%s%d%s %s", dir, (int)hr_size, dir, _msg_table[MSG_020 - MSG_000]);
     }
-    else if (fake_units) 
+    else if (fake_units)
     {
         if (hr_size < 8) // 1-8 terrabyte a kadar buraya girecek 
         {
@@ -139,7 +110,7 @@ std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units
             t = (double)upo2((uint16_t)hr_size);
             i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
             res = std::to_string(static_cast<int>(i_size));
-            if (suffix == 3) 
+            if (suffix == 3)
                 res += " GB";
             else if (suffix == 4)
                 res += " TB";
@@ -172,13 +143,13 @@ void listAllVolumeInfo()
     std::cout << "==========================================================\n";
 
     // Iterate through each drive
-    for (DWORD i = 0; i < drives ; i += 4)
+    for (DWORD i = 0; i < drives; i += 4)
     {
         _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
 
         UINT driveType = GetDriveType(drivePath);
 
-        if (driveType == DRIVE_REMOVABLE  && driveType != DRIVE_FIXED)
+        if (driveType == DRIVE_REMOVABLE && driveType != DRIVE_FIXED)
         {
             // Get volume information
             _TCHAR volumeName[MAX_PATH];
@@ -189,16 +160,16 @@ void listAllVolumeInfo()
 
 
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
-            {   
+            {
                 foundDevices++;
                 std::string path = "\\\\.\\";
-                path.append( 1, static_cast<char>(drivePath[0])); 
-                path+= ":";
+                path.append(1, static_cast<char>(drivePath[0]));
+                path += ":";
                 std::wstring temp = std::wstring(path.begin(), path.end());
                 LPCWSTR wideString = temp.c_str();
                 hDrive = CreateFile(wideString, 0,
                     FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-                if (hDrive == INVALID_HANDLE_VALUE) 
+                if (hDrive == INVALID_HANDLE_VALUE)
                 {
                     const DWORD error = GetLastError();
                     std::cout << error << '\n';
@@ -214,20 +185,19 @@ void listAllVolumeInfo()
                 }
                 else
                 {
-                    if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
-                    {
-                        CloseHandle(hDrive);
-                        devices[foundDevices] = wideString;
-                        std::wcout <<"Drive Path: " << drivePath << '\n';
-                        std::wcout << "Drive Name: " << volumeName << '\n';
-                        std::wcout << "File System: " << fileSystem << '\n';
-                        std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
-                    }
-                    else
-                        std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
-                    std::cout << "==========================================================\n";
+                    CloseHandle(hDrive);
+                    devices[foundDevices] = wideString;
+                    std::wcout << "Drive Path: " << drivePath << '\n';
+                    std::wcout << "Drive Name: " << volumeName << '\n';
+                    std::wcout << "File System: " << fileSystem << '\n';
+                    std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
+
                 }
+
             }
+            else
+                std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
+            std::cout << "==========================================================\n";
 
         }
 
@@ -238,67 +208,10 @@ void listAllVolumeInfo()
 
 int main()
 {
-   listAllVolumeInfo();
-   
-   USES_CONVERSION_EX;
-
-   HRESULT hr = CoInitialize(NULL);
-   if (FAILED(hr)) {
-       std::cerr << "Failed to initialize COM.\n";
-       return 1;
-   }   
-   IVdsVolumeMF2* pVolumeMF2 = NULL;
-
-   const std::string s_pwszFileSystemTypeName{"EXFAT"};
-   const std::string s_pwszLabel{ "YEYEEEAH" };
-   USHORT usFileSystemRevision = 0; // File system revision (0 for default)
-   ULONG ulDesiredUnitAllocationSize = 0; // Desired unit allocation size (0 for default)
-
-   BOOL bForce = FALSE; // Force formatting flag
-   BOOL bQuickFormat = TRUE; // Quick format flag
-   BOOL bEnableCompression = FALSE; // Enable compression flag
-   IVdsAsync* pAsync = NULL; // Asynchronous operation pointer
-
-
-   LPWSTR pwszFileSystemTypeName = A2W_EX(s_pwszFileSystemTypeName.c_str(), s_pwszFileSystemTypeName.length());
-   LPWSTR pwszLabel = A2W_EX(s_pwszFileSystemTypeName.c_str(), s_pwszFileSystemTypeName.length());
-
-
-
-   hr = pVolumeMF2->FormatEx(pwszFileSystemTypeName, usFileSystemRevision, ulDesiredUnitAllocationSize,
-       pwszLabel, bForce, bQuickFormat, bEnableCompression, &pAsync);
-
-   if (FAILED(hr)) {
-       std::cerr << "Failed to format volume.\n";
-   }
-   else {
-       std::cout << "Volume formatted successfully.\n";
-   }
-
-   pVolumeMF2->Release();
-   CoUninitialize();
-
-
-
-
-
-
+    listAllVolumeInfo();
 
 }
 
-
-/*
-LPWSTR pwszFileSystemTypeName,
-USHORT usFileSystemRevision,
-ULONG ulDesiredUnitAllocationSize,
-LPWSTR pwszLabel,
-BOOL bForce,
-BOOL bQuickFormat,
-BOOL bEnableCompression,
-
-        pfFormatEx(wVolumeName, SelectedDrive.MediaType, wFSName, wLabel,
-            (Flags & FP_QUICK), ClusterSize, FormatExCallback);
-*/
 
 /*
 * Note to self:
@@ -333,7 +246,7 @@ BOOL bEnableCompression,
 */
 
 /*Note to self
-* 
+*
 * wcout part didnt work when turkish char encountered and broke.
 */
 
@@ -347,37 +260,37 @@ BOOL bEnableCompression,
 /*Note to self 17/03
 *
 * For right formatting function i will need to keep the storage size of the device
-*    --> implement: GetDriveSize and get value  then send it to 
-*                   SizeToHumanReadable ->from this we get smth like 16GB 
-* 
-* 
+*    --> implement: GetDriveSize and get value  then send it to
+*                   SizeToHumanReadable ->from this we get smth like 16GB
+*
+*
 * -----> Formatting:
-* 
+*
 *   1. Delete partition
 *           implement : GetVdsDiskInterface(DriveIndex, &IID_IVdsAdvancedDisk, (void**)&pAdvancedDisk, bSilent))
 *   2.	AnalyzeMBR(hPhysicalDrive, "Drive", FALSE);
-* 
+*
 *   3. if ((!ClearMBRGPT(hPhysicalDrive, SelectedDrive.DiskSize, SelectedDrive.SectorSize, use_large_fat32)) ||
-			(!InitializeDisk(hPhysicalDrive)))
+            (!InitializeDisk(hPhysicalDrive)))
 
     4. CreatePartition(hPhysicalDrive, partition_type, fs_type, (partition_type == PARTITION_STYLE_MBR)
-		&& (target_type == TT_UEFI), extra_partitions)) {
+        && (target_type == TT_UEFI), extra_partitions)) {
 
-    5. Format partition 
+    5. Format partition
         implement: FormatLargeFAT32
 
    6. !RemountVolume(drive_name, FALSE)
 
 */
 
-/*  
+/*
 *    Note to self 18 / 03
 *  -
-* 
-*   Bug on Terrabyte 
+*
+*   Bug on Terrabyte
 *   Bug on multiple devices on SD Card reader
-* 
-* 
+*
+*
 */
 
 /*
@@ -392,7 +305,7 @@ BOOL bEnableCompression,
 
 /*
 *    Note to self 20 / 03
-*  
+*
 *     Bug on multiple devices caused by mislabeling while polling through whole drive names. add i+4 if disk is eliminated
 *
 *
@@ -401,8 +314,7 @@ BOOL bEnableCompression,
 /*
 *    Note to self 25 / 03
 *
-*    The FormatEx method itself doesn't "know" which volume or drive it is formatting directly. 
-Instead, it relies on the volume object (IVdsVolumeMF2) that you pass to it as a parameter to determine which volume to format
+*     Still polling and opening handle to wrong device. i+=4 probably causes error
 *
 *
 */
