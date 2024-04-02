@@ -323,9 +323,8 @@ int main()
 */
 
 /*
-*    Note to self 25 / 03
+*    Note to self 02 / 04
 *
-*     Still polling and opening handle to wrong device. i+=4 probably causes error
-*
+*     SD Card reader USB devices listed as unknown
 *
 */
