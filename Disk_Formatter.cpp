@@ -13,6 +13,7 @@
 #include <string>
 #include <unordered_map>
 #include <sstream>
+#include <atlconv.h>
 
 #include <Vds.h> // Include the VDS header file
 #pragma comment(lib, "vds.lib") // Link against the VDS library
@@ -247,18 +248,20 @@ int main()
    }   
    IVdsVolumeMF2* pVolumeMF2 = NULL;
 
-   LPWSTR pwszFileSystemTypeName = L"FAT32"; // File system type name
+   const std::string s_pwszFileSystemTypeName{"EXFAT"};
+   const std::string s_pwszLabel{ "YEYEEEAH" };
    USHORT usFileSystemRevision = 0; // File system revision (0 for default)
    ULONG ulDesiredUnitAllocationSize = 0; // Desired unit allocation size (0 for default)
-   LPWSTR pwszLabel = L"MyDriveLabel"; // Volume label
+
    BOOL bForce = FALSE; // Force formatting flag
    BOOL bQuickFormat = TRUE; // Quick format flag
    BOOL bEnableCompression = FALSE; // Enable compression flag
    IVdsAsync* pAsync = NULL; // Asynchronous operation pointer
-   LPCSTR FSName = "FAT32";
-   LPCSTR Label = "mert";
 
-   CHAR* wVolumeName = NULL, * wLabel = utf8_to_wchar(Label), * wFSName = utf8_to_wchar(FSName);
+
+   LPWSTR pwszFileSystemTypeName = A2W_EX(s_pwszFileSystemTypeName.c_str(), s_pwszFileSystemTypeName.length());
+  // LPWSTR pwszLabel;
+
 
    hr = pVolumeMF2->FormatEx(pwszFileSystemTypeName, usFileSystemRevision, ulDesiredUnitAllocationSize,
        pwszLabel, bForce, bQuickFormat, bEnableCompression, &pAsync);
@@ -276,10 +279,16 @@ int main()
 
 
 /*
+LPWSTR pwszFileSystemTypeName,
+USHORT usFileSystemRevision,
+ULONG ulDesiredUnitAllocationSize,
+LPWSTR pwszLabel,
+BOOL bForce,
+BOOL bQuickFormat,
+BOOL bEnableCompression,
 
-
-
-
+        pfFormatEx(wVolumeName, SelectedDrive.MediaType, wFSName, wLabel,
+            (Flags & FP_QUICK), ClusterSize, FormatExCallback);
 */
 
 /*
