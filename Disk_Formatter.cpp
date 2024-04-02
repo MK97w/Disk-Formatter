@@ -125,7 +125,17 @@ std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units
     return res;
 }
 
+std::wstring GetVolumeGuid(const std::wstring& mountPoint)
+{
+    DWORD bufferLen = MAX_PATH;
+    wchar_t volumeName[MAX_PATH] = { 0 };
 
+    if (GetVolumeNameForVolumeMountPoint(mountPoint.c_str(), volumeName, bufferLen))
+    {
+        return std::wstring(volumeName);
+    }
+    return std::wstring();
+}
 
 
 void listAllVolumeInfo()
@@ -188,6 +198,7 @@ void listAllVolumeInfo()
                     CloseHandle(hDrive);
                     devices[foundDevices] = wideString;
                     std::wcout << "Drive Path: " << drivePath << '\n';
+                    std::wcout << "GUID: " << GetVolumeGuid(drivePath) << '\n';
                     std::wcout << "Drive Name: " << volumeName << '\n';
                     std::wcout << "File System: " << fileSystem << '\n';
                     std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
