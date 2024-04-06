@@ -13,7 +13,7 @@
 #include <string>
 #include <unordered_map>
 #include <sstream>
-
+#include <vss.h>
 #include <Vds.h> // Include the VDS header file
 //#pragma comment(lib, "vds.lib") // Link against the VDS library
 
@@ -217,7 +217,89 @@ void listAllVolumeInfo()
 int main()
 {
     listAllVolumeInfo();
+    HRESULT hr = CoInitialize(NULL);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to initialize COM.\n";
+        return 1;
+    }
 
+    std::wstring mountPoint = L"E:\\"; // Replace with the mount point of the volume you want to format
+    std::wstring volumeGUID = GetVolumeGuid(mountPoint);
+    if (volumeGUID.empty()) {
+        std::cerr << "Failed to get volume GUID.\n";
+        CoUninitialize();
+        return 1;
+    }
+
+    IVdsServiceLoader* pLoader = NULL;
+    hr = CoCreateInstance(CLSID_VdsLoader, NULL, CLSCTX_LOCAL_SERVER, IID_IVdsServiceLoader, (LPVOID*)&pLoader);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to create VDS loader instance.\n";
+        CoUninitialize();
+        return 1;
+    }
+
+    IVdsService* pService = NULL;
+    hr = pLoader->LoadService(NULL, &pService);
+    pLoader->Release();
+    if (FAILED(hr)) {
+        std::cerr << "Failed to load VDS service.\n";
+        CoUninitialize();
+        return 1;
+    }
+
+    IVdsEnumObject* pEnumVolumes = NULL;
+    hr = pService->QueryVolume(&pEnumVolumes);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to query volumes.\n";
+        pService->Release();
+        CoUninitialize();
+        return 1;
+    }
+
+    IVdsVolume* pVolume = NULL;
+    hr = pEnumVolumes->Next(1, &pVolume, NULL);
+    pEnumVolumes->Release();
+    if (FAILED(hr)) {
+        std::cerr << "Failed to get volume object.\n";
+        pService->Release();
+        CoUninitialize();
+        return 1;
+    }
+
+    IVdsVolumeMF2* pVolumeMF2 = NULL;
+    hr = pVolume->QueryInterface(IID_IVdsVolumeMF2, (void**)&pVolumeMF2);
+    pVolume->Release();
+    if (FAILED(hr)) {
+        std::cerr << "Failed to get IVdsVolumeMF2 interface.\n";
+        pService->Release();
+        CoUninitialize();
+        return 1;
+    }
+
+    LPWSTR pwszFileSystemTypeName = const_cast<LPWSTR>(L"FAT32");
+    USHORT usFileSystemRevision = 0;
+    ULONG ulDesiredUnitAllocationSize = 0;
+    LPWSTR pwszLabel = const_cast<LPWSTR>(L"MyDriveLabel");
+    BOOL bForce = FALSE;
+    BOOL bQuickFormat = TRUE;
+    BOOL bEnableCompression = FALSE;
+    IVdsAsync* pAsync = NULL;
+
+    hr = pVolumeMF2->FormatEx(pwszFileSystemTypeName, usFileSystemRevision, ulDesiredUnitAllocationSize,
+        pwszLabel, bForce, bQuickFormat, bEnableCompression, &pAsync);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to format volume.\n";
+    }
+    else {
+        std::cout << "Volume formatting initiated for GUID: " << volumeGUID << std::endl;
+        // You can optionally wait for the formatting operation to complete using IVdsAsync::Wait
+    }
+
+    pVolumeMF2->Release();
+    pService->Release();
+    CoUninitialize();
+    return 0;
 }
 
 
