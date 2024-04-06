@@ -150,8 +150,6 @@ void listAllVolumeInfo()
         std::cerr << "Error getting logical drives. Error code: " << GetLastError() << std::endl;
     }
 
-    std::cout << "==========================================================\n";
-
     // Iterate through each drive
     for (DWORD i = 0; i < drives; i += 4)
     {
@@ -197,18 +195,17 @@ void listAllVolumeInfo()
                 {
                     CloseHandle(hDrive);
                     devices[foundDevices] = wideString;
+                    std::cout << "==========================================================\n";
                     std::wcout << "Drive Path: " << drivePath << '\n';
                     std::wcout << "GUID: " << GetVolumeGuid(drivePath) << '\n';
                     std::wcout << "Drive Name: " << volumeName << '\n';
                     std::wcout << "File System: " << fileSystem << '\n';
                     std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
+                    std::cout << "==========================================================\n";
 
                 }
 
             }
-            else
-                std::cerr << "Error getting volume information. Error code: " << GetLastError() << std::endl;
-            std::cout << "==========================================================\n";
 
         }
 
