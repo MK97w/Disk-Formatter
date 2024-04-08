@@ -15,8 +15,9 @@
 #include <unordered_map>
 #include <sstream>
 #include <vss.h>
-#include <Vds.h> // Include the VDS header file
-//#pragma comment(lib, "vds.lib") // Link against the VDS library
+#include <Vds.h>
+
+#pragma comment(lib, "vds.lib") 
 
 
 
@@ -213,6 +214,25 @@ void listAllVolumeInfo()
     }
 }
 
+BOOL format_VDS(uint64_t PartitionOffset, DWORD ClusterSize, LPCSTR FSName, LPCSTR Label, DWORD Flags)
+{
+    HRESULT hr;
+    ULONG ulFetched;
+    IVdsServiceLoader* pLoader;
+    IVdsService* pService;
+    IEnumVdsObject* pEnum;
+    IUnknown* pUnk;
+
+    // Initialize COM
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+    CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_CONNECT,
+        RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
+   
+ // Create a VDS Loader Instance
+    CoCreateInstance(CLSID_VdsLoader, NULL, CLSCTX_LOCAL_SERVER, IID_IVdsServiceLoader, (LPVOID*)&pLoader);
+
+
+}
 
 int main()
 {
@@ -332,5 +352,11 @@ int main()
 *     Okay so back to stealing from rufus hehe :)
 *     I must implement FormatNativeVds for GB < 64 -> for fat32
 *     otherwise implement FormatLargeFAT32
+*
+Note to self 08 / 04
+*
+*     FormatLargeFAT32 -> is mandatory for 64 gb FAT32 otherwise it fails
+*     FormatNativeVds -> handles anything under 32GB
+* 
 *
 */
