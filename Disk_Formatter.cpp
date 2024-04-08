@@ -11,6 +11,7 @@
 #include <io.h> 
 #include <fcntl.h> 
 #include <string>
+#include <windowsx.h>
 #include <unordered_map>
 #include <sstream>
 #include <vss.h>
@@ -216,6 +217,8 @@ void listAllVolumeInfo()
 int main()
 {
     listAllVolumeInfo();
+
+
 }
 
 
