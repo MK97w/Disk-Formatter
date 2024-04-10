@@ -126,6 +126,88 @@ std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units
     }
     return res;
 }
+enum CALLBACKCOMMAND {
+    PROGRESS,
+    DONEWITHSTRUCTURE,
+    UNKNOWN2,
+    UNKNOWN3,
+    UNKNOWN4,
+    UNKNOWN5,
+    INSUFFICIENTRIGHTS,
+    UNKNOWN7,
+    UNKNOWN8,
+    UNKNOWN9,
+    UNKNOWNA,
+    DONE, // format OK!
+    UNKNOWNC,
+    UNKNOWND,
+    OUTPUT,
+    STRUCTUREPROGRESS
+};
+
+// 
+// FMIFS callback definition 
+// 
+typedef BOOLEAN(WINAPI* PFMIFSCALLBACK)(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo);
+
+enum class FMIFS_MEDIA_TYPE
+{
+    Unknown = MEDIA_TYPE::Unknown,                   // Format is unknown
+    RemovableMedia = MEDIA_TYPE::RemovableMedia,     // Removable media other than floppy
+    FixedMedia = MEDIA_TYPE::FixedMedia,             // Fixed hard disk media
+};
+
+ULONG g_dwTlsIndex;
+
+struct FORMAT_DATA
+{
+    BOOLEAN fOk;
+};
+
+BOOLEAN FormatCb(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo)
+{
+    FORMAT_DATA* fd = (FORMAT_DATA*)TlsGetValue(g_dwTlsIndex);
+    if (Command == DONE)
+    {
+        fd->fOk = TRUE;
+    }
+    return TRUE;
+}
+
+BOOL TryFormat()
+{
+    FORMAT_DATA fd;
+    fd.fOk = FALSE;
+    const wchar_t* str = L"E:\\";
+
+    if ((g_dwTlsIndex = TlsAlloc()) != TLS_OUT_OF_INDEXES)
+    {
+        if (HMODULE hmod = LoadLibrary(L"fmifs"))
+        {
+            VOID(WINAPI * FormatEx)(PCWSTR DriveRoot,
+                FMIFS_MEDIA_TYPE MediaType,
+                PCWSTR FileSystemName,
+                PCWSTR VolumeLabel,
+                BOOL QuickFormat,
+                DWORD ClusterSize,
+                PFMIFSCALLBACK Callback);
+
+            *(void**)&FormatEx = GetProcAddress(hmod, "FormatEx");
+
+            if (FormatEx)
+            {
+                TlsSetValue(g_dwTlsIndex, &fd);
+                FormatEx(str, FMIFS_MEDIA_TYPE::RemovableMedia, L"NTFS", L"SomeLabel", TRUE, 512, FormatCb);
+            }
+
+            FreeLibrary(hmod);
+        }
+
+        TlsFree(g_dwTlsIndex);
+    }
+
+    return fd.fOk;
+}
 
 std::wstring GetVolumeGuid(const std::wstring& mountPoint)
 {
@@ -213,93 +295,12 @@ void listAllVolumeInfo()
 
     }
 }
-enum CALLBACKCOMMAND {
-    PROGRESS,
-    DONEWITHSTRUCTURE,
-    UNKNOWN2,
-    UNKNOWN3,
-    UNKNOWN4,
-    UNKNOWN5,
-    INSUFFICIENTRIGHTS,
-    UNKNOWN7,
-    UNKNOWN8,
-    UNKNOWN9,
-    UNKNOWNA,
-    DONE, // format OK!
-    UNKNOWNC,
-    UNKNOWND,
-    OUTPUT,
-    STRUCTUREPROGRESS
-};
-
-// 
-// FMIFS callback definition 
-// 
-typedef BOOLEAN(WINAPI* PFMIFSCALLBACK)(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo);
-
-enum class FMIFS_MEDIA_TYPE 
-{
-    Unknown = MEDIA_TYPE::Unknown,                   // Format is unknown
-    RemovableMedia = MEDIA_TYPE::RemovableMedia,     // Removable media other than floppy
-    FixedMedia = MEDIA_TYPE::FixedMedia,             // Fixed hard disk media
-};
-
-ULONG g_dwTlsIndex;
-
-struct FORMAT_DATA
-{
-    BOOLEAN fOk;
-};
-
-BOOLEAN FormatCb(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo)
-{
-    FORMAT_DATA* fd = (FORMAT_DATA*)TlsGetValue(g_dwTlsIndex);
-    if (Command == DONE)
-    {
-        fd->fOk = TRUE;
-    }
-    return TRUE;
-}
-
-BOOL TryFormat()
-{
-    FORMAT_DATA fd;
-    fd.fOk = FALSE;
-
-    if ((g_dwTlsIndex = TlsAlloc()) != TLS_OUT_OF_INDEXES)
-    {
-        if (HMODULE hmod = LoadLibrary(L"fmifs"))
-        {
-            VOID(WINAPI * FormatEx)(PWSTR DriveRoot,
-                FMIFS_MEDIA_TYPE MediaType,
-                PWSTR FileSystemName,
-                PWSTR VolumeLabel,
-                BOOL QuickFormat,
-                DWORD ClusterSize,
-                PFMIFSCALLBACK Callback);
-
-            *(void**)&FormatEx = GetProcAddress(hmod, "FormatEx");
-
-            if (FormatEx)
-            {
-                TlsSetValue(g_dwTlsIndex, &fd);
-                //FormatEx(L"e:", RemovableMedia, L"NTFS", L"SomeLabel", TRUE, 512, FormatCb);
-            }
-
-            FreeLibrary(hmod);
-        }
-
-        TlsFree(g_dwTlsIndex);
-    }
-
-    return fd.fOk;
-}
 
 int main()
 {
+   // listAllVolumeInfo();
+    auto res = TryFormat();
     listAllVolumeInfo();
-
-
 }
 
 
