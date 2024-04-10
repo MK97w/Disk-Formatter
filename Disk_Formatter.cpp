@@ -14,10 +14,10 @@
 #include <windowsx.h>
 #include <unordered_map>
 #include <sstream>
-#include <vss.h>
+#include <winioctl.h>
 #include <Vds.h>
 
-#pragma comment(lib, "vds.lib") 
+//#pragma comment(lib, "vds.lib") 
 
 
 
@@ -213,25 +213,86 @@ void listAllVolumeInfo()
 
     }
 }
+enum CALLBACKCOMMAND {
+    PROGRESS,
+    DONEWITHSTRUCTURE,
+    UNKNOWN2,
+    UNKNOWN3,
+    UNKNOWN4,
+    UNKNOWN5,
+    INSUFFICIENTRIGHTS,
+    UNKNOWN7,
+    UNKNOWN8,
+    UNKNOWN9,
+    UNKNOWNA,
+    DONE, // format OK!
+    UNKNOWNC,
+    UNKNOWND,
+    OUTPUT,
+    STRUCTUREPROGRESS
+};
 
-BOOL format_VDS(uint64_t PartitionOffset, DWORD ClusterSize, LPCSTR FSName, LPCSTR Label, DWORD Flags)
+// 
+// FMIFS callback definition 
+// 
+typedef BOOLEAN(WINAPI* PFMIFSCALLBACK)(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo);
+
+enum class FMIFS_MEDIA_TYPE 
 {
-    HRESULT hr;
-    ULONG ulFetched;
-    IVdsServiceLoader* pLoader;
-    IVdsService* pService;
-    IEnumVdsObject* pEnum;
-    IUnknown* pUnk;
+    Unknown = MEDIA_TYPE::Unknown,                   // Format is unknown
+    RemovableMedia = MEDIA_TYPE::RemovableMedia,     // Removable media other than floppy
+    FixedMedia = MEDIA_TYPE::FixedMedia,             // Fixed hard disk media
+};
 
-    // Initialize COM
-    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
-    CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_CONNECT,
-        RPC_C_IMP_LEVEL_IMPERSONATE, NULL, 0, NULL);
-   
- // Create a VDS Loader Instance
-    CoCreateInstance(CLSID_VdsLoader, NULL, CLSCTX_LOCAL_SERVER, IID_IVdsServiceLoader, (LPVOID*)&pLoader);
+ULONG g_dwTlsIndex;
 
+struct FORMAT_DATA
+{
+    BOOLEAN fOk;
+};
 
+BOOLEAN FormatCb(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo)
+{
+    FORMAT_DATA* fd = (FORMAT_DATA*)TlsGetValue(g_dwTlsIndex);
+    if (Command == DONE)
+    {
+        fd->fOk = TRUE;
+    }
+    return TRUE;
+}
+
+BOOL TryFormat()
+{
+    FORMAT_DATA fd;
+    fd.fOk = FALSE;
+
+    if ((g_dwTlsIndex = TlsAlloc()) != TLS_OUT_OF_INDEXES)
+    {
+        if (HMODULE hmod = LoadLibrary(L"fmifs"))
+        {
+            VOID(WINAPI * FormatEx)(PWSTR DriveRoot,
+                FMIFS_MEDIA_TYPE MediaType,
+                PWSTR FileSystemName,
+                PWSTR VolumeLabel,
+                BOOL QuickFormat,
+                DWORD ClusterSize,
+                PFMIFSCALLBACK Callback);
+
+            *(void**)&FormatEx = GetProcAddress(hmod, "FormatEx");
+
+            if (FormatEx)
+            {
+                TlsSetValue(g_dwTlsIndex, &fd);
+                //FormatEx(L"e:", RemovableMedia, L"NTFS", L"SomeLabel", TRUE, 512, FormatCb);
+            }
+
+            FreeLibrary(hmod);
+        }
+
+        TlsFree(g_dwTlsIndex);
+    }
+
+    return fd.fOk;
 }
 
 int main()
