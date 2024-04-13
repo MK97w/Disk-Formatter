@@ -197,7 +197,7 @@ BOOL TryFormat()
             if (FormatEx)
             {
                 TlsSetValue(g_dwTlsIndex, &fd);
-                FormatEx(str, FMIFS_MEDIA_TYPE::RemovableMedia, L"NTFS", L"SomeLabel", TRUE, 512, FormatCb);
+                FormatEx(str, FMIFS_MEDIA_TYPE::RemovableMedia, L"FAT32", L"mertnew", TRUE, 8192, FormatCb);
             }
 
             FreeLibrary(hmod);
