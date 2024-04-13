@@ -120,4 +120,12 @@ class FAT32_Formatter
 {
 public:
 	DWORD get_volume_id();
+	DWORD get_fat_size_sectors(_In_ DWORD DskSize, _In_ DWORD ReservedSecCnt, _In_ DWORD SecPerClus, _In_ DWORD NumFATs, _In_ DWORD BytesPerSect);
+	void seek_to_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSect);
+	void write_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSector, _In_ void* Data, _In_ DWORD NumSects);
+	void zero_sectors(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_  DWORD BytesPerSect, _In_ DWORD NumSects);
+	BYTE get_spc(_In_ DWORD ClusterSizeKB, _In_ DWORD BytesPerSect);
+	BYTE get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ DWORD BytesPerSect);
+	int format_volume(_In_z_ LPCSTR vol, _In_ const format_params* params);
+	[[noreturn]] void die(_In_z_ PCSTR error);
 };

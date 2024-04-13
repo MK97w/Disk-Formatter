@@ -126,6 +126,19 @@ std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units
     }
     return res;
 }
+
+std::wstring GetVolumeGuid(const std::wstring& mountPoint)
+{
+    DWORD bufferLen = MAX_PATH;
+    wchar_t volumeName[MAX_PATH] = { 0 };
+
+    if (GetVolumeNameForVolumeMountPoint(mountPoint.c_str(), volumeName, bufferLen))
+    {
+        return std::wstring(volumeName);
+    }
+    return std::wstring();
+}
+
 enum CALLBACKCOMMAND {
     PROGRESS,
     DONEWITHSTRUCTURE,
@@ -184,7 +197,8 @@ BOOL TryFormat()
     {
         if (HMODULE hmod = LoadLibrary(L"fmifs"))
         {
-            VOID(WINAPI * FormatEx)(PCWSTR DriveRoot,
+            VOID(WINAPI * FormatEx)(
+                PCWSTR DriveRoot,
                 FMIFS_MEDIA_TYPE MediaType,
                 PCWSTR FileSystemName,
                 PCWSTR VolumeLabel,
@@ -197,7 +211,8 @@ BOOL TryFormat()
             if (FormatEx)
             {
                 TlsSetValue(g_dwTlsIndex, &fd);
-                FormatEx(str, FMIFS_MEDIA_TYPE::RemovableMedia, L"FAT32", L"mertnew", TRUE, 8192, FormatCb);
+                auto a = GetVolumeGuid(str);
+                FormatEx(str, FMIFS_MEDIA_TYPE::RemovableMedia, L"NTFS", L"lolo", TRUE, 8192, FormatCb);
             }
 
             FreeLibrary(hmod);
@@ -209,17 +224,7 @@ BOOL TryFormat()
     return fd.fOk;
 }
 
-std::wstring GetVolumeGuid(const std::wstring& mountPoint)
-{
-    DWORD bufferLen = MAX_PATH;
-    wchar_t volumeName[MAX_PATH] = { 0 };
 
-    if (GetVolumeNameForVolumeMountPoint(mountPoint.c_str(), volumeName, bufferLen))
-    {
-        return std::wstring(volumeName);
-    }
-    return std::wstring();
-}
 
 
 void listAllVolumeInfo()
