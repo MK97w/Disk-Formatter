@@ -18,12 +18,12 @@
     <ClCompile Include="Disk_Formatter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="device.cpp">
+    <ClCompile Include="fat32_format.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="device.h">
+    <ClInclude Include="fat32_format.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

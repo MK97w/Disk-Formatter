@@ -129,11 +129,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="device.cpp" />
+    <ClCompile Include="fat32_format.cpp" />
     <ClCompile Include="Disk_Formatter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="device.h" />
+    <ClInclude Include="fat32_format.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
