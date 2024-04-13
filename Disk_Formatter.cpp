@@ -16,6 +16,7 @@
 #include <sstream>
 #include <winioctl.h>
 #include <Vds.h>
+#include "fat32_format.h"
 
 //#pragma comment(lib, "vds.lib") 
 
@@ -191,7 +192,7 @@ BOOL TryFormat()
 {
     FORMAT_DATA fd;
     fd.fOk = FALSE;
-    const wchar_t* str = L"E:\\";
+    const wchar_t* str = L"D:\\";
 
     if ((g_dwTlsIndex = TlsAlloc()) != TLS_OUT_OF_INDEXES)
     {
@@ -212,7 +213,7 @@ BOOL TryFormat()
             {
                 TlsSetValue(g_dwTlsIndex, &fd);
                 auto a = GetVolumeGuid(str);
-                FormatEx(str, FMIFS_MEDIA_TYPE::RemovableMedia, L"NTFS", L"lolo", TRUE, 8192, FormatCb);
+                FormatEx(str, FMIFS_MEDIA_TYPE::RemovableMedia, L"EXFAT", L"Mert64", TRUE, 8192, FormatCb);
             }
 
             FreeLibrary(hmod);
@@ -301,10 +302,18 @@ void listAllVolumeInfo()
     }
 }
 
+FAT32_Formatter fFormatter;
+
 int main()
 {
-   // listAllVolumeInfo();
-    auto res = TryFormat();
+    listAllVolumeInfo();
+   // auto res = TryFormat();
+    char volume[8] = R"(\\.\?:)";
+    volume[4] = 'D';
+    format_params p;
+    fFormatter.format_volume(volume,&p);
+    strcat_s(volume, "\\");
+    SetVolumeLabelA(volume, "formatLargeFat");
     listAllVolumeInfo();
 }
 
