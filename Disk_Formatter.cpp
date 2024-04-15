@@ -309,7 +309,7 @@ int main()
     listAllVolumeInfo();
    // auto res = TryFormat();
     char volume[8] = R"(\\.\?:)";
-    volume[4] = 'D';
+    volume[4] = 'E';
     format_params p;
     fFormatter.format_volume(volume,&p);
     strcat_s(volume, "\\");
