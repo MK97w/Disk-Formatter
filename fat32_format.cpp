@@ -1,6 +1,6 @@
 #include "fat32_format.h"
 
-DWORD FAT32_Formatter::get_volume_id()
+DWORD get_volume_id()
 {
 	SYSTEMTIME s;
 
@@ -30,7 +30,7 @@ This is the Microsoft calculation from FATGEN
 	return( FatSz );
 */
 
-DWORD FAT32_Formatter::get_fat_size_sectors(_In_ DWORD DskSize, _In_ DWORD ReservedSecCnt, _In_ DWORD SecPerClus, _In_ DWORD NumFATs, _In_ DWORD BytesPerSect)
+DWORD get_fat_size_sectors(_In_ DWORD DskSize, _In_ DWORD ReservedSecCnt, _In_ DWORD SecPerClus, _In_ DWORD NumFATs, _In_ DWORD BytesPerSect)
 {
 	const ULONGLONG FatElementSize = 4;
 
@@ -47,7 +47,7 @@ DWORD FAT32_Formatter::get_fat_size_sectors(_In_ DWORD DskSize, _In_ DWORD Reser
 
 	return (DWORD)FatSz;
 }
-void FAT32_Formatter::seek_to_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSect)
+void seek_to_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSect)
 {
 	LARGE_INTEGER Offset;
 
@@ -58,7 +58,7 @@ void FAT32_Formatter::seek_to_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ 
 		die("Failed to seek");
 }
 
-void FAT32_Formatter::write_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSector, _In_ void* Data, _In_ DWORD NumSects)
+void write_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSector, _In_ void* Data, _In_ DWORD NumSects)
 {
 	DWORD dwWritten;
 
@@ -69,7 +69,7 @@ void FAT32_Formatter::write_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DW
 		die("Failed to write");
 }
 
-void FAT32_Formatter::zero_sectors(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_  DWORD BytesPerSect, _In_ DWORD NumSects)
+void zero_sectors(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_  DWORD BytesPerSect, _In_ DWORD NumSects)
 {
 	LARGE_INTEGER Start, End, Ticks, Frequency;
 	DWORD qBytesTotal = NumSects * BytesPerSect;
@@ -101,13 +101,13 @@ void FAT32_Formatter::zero_sectors(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ 
 	printf("Wrote %lu bytes in %.2f seconds, %.2f Megabytes/sec\n", qBytesTotal, fTime, fBytesTotal / (fTime * 1024.0 * 1024.0));
 }
 
-BYTE FAT32_Formatter::get_spc(_In_ DWORD ClusterSizeKB, _In_ DWORD BytesPerSect)
+BYTE get_spc(_In_ DWORD ClusterSizeKB, _In_ DWORD BytesPerSect)
 {
 	DWORD spc = (ClusterSizeKB * 1024) / BytesPerSect;
 	return (BYTE)spc;
 }
 
-BYTE FAT32_Formatter::get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ DWORD BytesPerSect)
+BYTE get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ DWORD BytesPerSect)
 {
 	LONGLONG DiskSizeMB = DiskSizeBytes / (1024 * 1024);
 
@@ -139,7 +139,7 @@ BYTE FAT32_Formatter::get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ 
 	return 1;
 }
 
-int FAT32_Formatter::format_volume(_In_z_ LPCSTR vol, _In_ const format_params* params)
+int format_volume(_In_z_ LPCSTR vol, _In_ const format_params* params)
 {
 	DWORD cbRet;
 	BOOL  bRet;
@@ -159,14 +159,14 @@ int FAT32_Formatter::format_volume(_In_z_ LPCSTR vol, _In_ const format_params* 
 	ULONGLONG qTotalSectors;
 	ULONGLONG FatNeeded, ClusterCount;
 
-	if (!IsDebuggerPresent() && !params->all_yes)
+	/*if (!IsDebuggerPresent() && !params->all_yes)
 	{
 		printf("Warning ALL data on drive '%s' will be lost irretrievably, are you sure\n(y/n) :", vol);
 		if (toupper(getchar()) != 'Y')
 		{
 			exit(EXIT_FAILURE);
 		}
-	}
+	}*/
 
 	HANDLE hDevice = CreateFileA(
 		vol,
@@ -476,7 +476,7 @@ int FAT32_Formatter::format_volume(_In_z_ LPCSTR vol, _In_ const format_params* 
 	return TRUE;
 }
 
-[[noreturn]] void FAT32_Formatter::die(_In_z_ PCSTR error)
+[[noreturn]] void die(_In_z_ PCSTR error)
 {
 	DWORD dw = GetLastError();
 

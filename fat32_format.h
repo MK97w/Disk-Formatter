@@ -16,6 +16,8 @@ static const int ALIGNING_SIZE = 1024 * 1024;
 #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_MEMORY 1
 #define _CRT_SECURE_CPP_OVERLOAD_SECURE_NAMES_MEMORY   1
 
+
+#pragma once
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -116,9 +118,7 @@ High order word is calculated:
 								1d02h
 */
 
-class FAT32_Formatter
-{
-public:
+
 	DWORD get_volume_id();
 	DWORD get_fat_size_sectors(_In_ DWORD DskSize, _In_ DWORD ReservedSecCnt, _In_ DWORD SecPerClus, _In_ DWORD NumFATs, _In_ DWORD BytesPerSect);
 	void seek_to_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSect);
@@ -128,4 +128,3 @@ public:
 	BYTE get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ DWORD BytesPerSect);
 	int format_volume(_In_z_ LPCSTR vol, _In_ const format_params* params);
 	[[noreturn]] void die(_In_z_ PCSTR error);
-};

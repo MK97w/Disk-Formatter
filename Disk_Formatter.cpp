@@ -302,18 +302,17 @@ void listAllVolumeInfo()
     }
 }
 
-FAT32_Formatter fFormatter;
 
 int main()
 {
     listAllVolumeInfo();
    // auto res = TryFormat();
     char volume[8] = R"(\\.\?:)";
-    volume[4] = 'E';
+    volume[4] = 'F';
     format_params p;
-    fFormatter.format_volume(volume,&p);
+    format_volume(volume,&p);
     strcat_s(volume, "\\");
-    SetVolumeLabelA(volume, "formatLargeFat");
+    SetVolumeLabelA(volume, "LLLLLL");
     listAllVolumeInfo();
 }
 
