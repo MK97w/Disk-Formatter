@@ -312,7 +312,7 @@ int main()
     format_params p;
     format_volume(volume,&p);
     strcat_s(volume, "\\");
-    SetVolumeLabelA(volume, "LLLLLL");
+    SetVolumeLabelA(volume, "lalalala");
     listAllVolumeInfo();
 }
 
