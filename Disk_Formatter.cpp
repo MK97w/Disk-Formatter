@@ -17,7 +17,7 @@
 #include <winioctl.h>
 #include <Vds.h>
 #include "fat32_format.h"
-
+#include "format.h"
 //#pragma comment(lib, "vds.lib") 
 
 
@@ -140,90 +140,6 @@ std::wstring GetVolumeGuid(const std::wstring& mountPoint)
     return std::wstring();
 }
 
-enum CALLBACKCOMMAND {
-    PROGRESS,
-    DONEWITHSTRUCTURE,
-    UNKNOWN2,
-    UNKNOWN3,
-    UNKNOWN4,
-    UNKNOWN5,
-    INSUFFICIENTRIGHTS,
-    UNKNOWN7,
-    UNKNOWN8,
-    UNKNOWN9,
-    UNKNOWNA,
-    DONE, // format OK!
-    UNKNOWNC,
-    UNKNOWND,
-    OUTPUT,
-    STRUCTUREPROGRESS
-};
-
-// 
-// FMIFS callback definition 
-// 
-typedef BOOLEAN(WINAPI* PFMIFSCALLBACK)(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo);
-
-enum class FMIFS_MEDIA_TYPE
-{
-    Unknown = MEDIA_TYPE::Unknown,                   // Format is unknown
-    RemovableMedia = MEDIA_TYPE::RemovableMedia,     // Removable media other than floppy
-    FixedMedia = MEDIA_TYPE::FixedMedia,             // Fixed hard disk media
-};
-
-ULONG g_dwTlsIndex;
-
-struct FORMAT_DATA
-{
-    BOOLEAN fOk;
-};
-
-BOOLEAN FormatCb(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo)
-{
-    FORMAT_DATA* fd = (FORMAT_DATA*)TlsGetValue(g_dwTlsIndex);
-    if (Command == DONE)
-    {
-        fd->fOk = TRUE;
-    }
-    return TRUE;
-}
-
-BOOL TryFormat()
-{
-    FORMAT_DATA fd;
-    fd.fOk = FALSE;
-    const wchar_t* str = L"E:\\";
-
-    if ((g_dwTlsIndex = TlsAlloc()) != TLS_OUT_OF_INDEXES)
-    {
-        if (HMODULE hmod = LoadLibrary(L"fmifs"))
-        {
-            VOID(WINAPI * FormatEx)(
-                PCWSTR DriveRoot,
-                FMIFS_MEDIA_TYPE MediaType,
-                PCWSTR FileSystemName,
-                PCWSTR VolumeLabel,
-                BOOL QuickFormat,
-                DWORD ClusterSize,
-                PFMIFSCALLBACK Callback);
-
-            *(void**)&FormatEx = GetProcAddress(hmod, "FormatEx");
-
-            if (FormatEx)
-            {
-                TlsSetValue(g_dwTlsIndex, &fd);
-                auto a = GetVolumeGuid(str);
-                FormatEx(str, FMIFS_MEDIA_TYPE::RemovableMedia, L"FAT32", L"Mert32", TRUE, 8192, FormatCb);
-            }
-
-            FreeLibrary(hmod);
-        }
-
-        TlsFree(g_dwTlsIndex);
-    }
-
-    return fd.fOk;
-}
 
 
 
@@ -302,136 +218,12 @@ void listAllVolumeInfo()
     }
 }
 
-
 int main()
 {
-    listAllVolumeInfo();
-    auto res = TryFormat();
-   //char volume[8] = R"(\\.\?:)";
-   //volume[4] = 'E';
-   //format_params p;
-   //format_volume(volume,&p);
-   //strcat_s(volume, "\\");
-   //SetVolumeLabelA(volume, "32GB_SDCard");
+   VolumeFormatter formatter;
    listAllVolumeInfo();
+   //formatter.FMIFS_Format(L"E:\\",L"NTFS");
+   listAllVolumeInfo();
+
 }
 
-
-/*
-* Note to self:
-*
-* Rufus lists devices starting from 130 to 131
-*
-* My app finds 128 and 129 find out why
-*/
-
-/*
-    Note to self: 29/02
-
-   1- Rufus first SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_ENUMERATOR_NAME) to get the name
-
-    if USBSTOR (and variants) -> sets device props to USB
-                    -> Then looks for if generic storage names to find out if its CARD or SCSI
-
-   2-  SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_HARDWAREID,
-            &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsVHD(buffer);  to find if its VHD
-
-            Buffer becomes : USBSTOR\Disk________MassStorageClass____
-                  ->If in step1 wont set the parameter is_CARD true
-                    ->Inside this buffer again we search for SD Card related information
-                        "_SD_", "_SDHC_", "_SDXC_", "_MMC_", "_MS_", "_MSPro_", "_xDPicture_", "_O2Media_"
-                        = "SCSI\\Disk";
-                        and _SD&", "_SDHC&", "_SDXC&", "_MMC&", "_MS&", "_MSPro&", "_xDPicture&", "_O2Media&
-
-    3- Checkes for removal policy with  SetupDiGetDeviceRegistryPropertyA(dev_info, &dev_info_data, SPDRP_REMOVAL_POLICY,
-            &data_type, (LPBYTE)buffer, sizeof(buffer), &size) && IsRemovable(buffer);
-
-    4- IsMediaPresent(drive_index)) where we eliminate the device if there is no media
-*/
-
-/*Note to self
-*
-* wcout part didnt work when turkish char encountered and broke.
-*/
-
-/*Note to self
-*
-* Probably i will not need device id -> evint_detail_data->DevicePath, should be enough. I think i should only keep this and open deivce using it
-
-*/
-
-
-/*Note to self 17/03
-*
-* For right formatting function i will need to keep the storage size of the device
-*    --> implement: GetDriveSize and get value  then send it to
-*                   SizeToHumanReadable ->from this we get smth like 16GB
-*
-*
-* -----> Formatting:
-*
-*   1. Delete partition
-*           implement : GetVdsDiskInterface(DriveIndex, &IID_IVdsAdvancedDisk, (void**)&pAdvancedDisk, bSilent))
-*   2.	AnalyzeMBR(hPhysicalDrive, "Drive", FALSE);
-*
-*   3. if ((!ClearMBRGPT(hPhysicalDrive, SelectedDrive.DiskSize, SelectedDrive.SectorSize, use_large_fat32)) ||
-            (!InitializeDisk(hPhysicalDrive)))
-
-    4. CreatePartition(hPhysicalDrive, partition_type, fs_type, (partition_type == PARTITION_STYLE_MBR)
-        && (target_type == TT_UEFI), extra_partitions)) {
-
-    5. Format partition
-        implement: FormatLargeFAT32
-
-   6. !RemountVolume(drive_name, FALSE)
-
-*/
-
-/*
-*    Note to self 18 / 03
-*  -
-*
-*   Bug on Terrabyte
-*   Bug on multiple devices on SD Card reader
-*
-*
-*/
-
-/*
-*    Note to self 19 / 03
-*  -
-*
-*   Terrabyte storage cannot be detected by its own
-*     Bug on multiple devices caused by mislabeling while polling through whole drive names.
-*
-*
-*/
-
-/*
-*    Note to self 20 / 03
-*
-*     Bug on multiple devices caused by mislabeling while polling through whole drive names. add i+4 if disk is eliminated
-*
-*
-*/
-
-/*
-*    Note to self 02 / 04
-*
-*     SD Card reader USB devices listed as unknown
-*
-*/
-/*
-*    Note to self 04 / 04
-*
-*     Okay so back to stealing from rufus hehe :)
-*     I must implement FormatNativeVds for GB < 64 -> for fat32
-*     otherwise implement FormatLargeFAT32
-*
-Note to self 08 / 04
-*
-*     FormatLargeFAT32 -> is mandatory for 64 gb FAT32 otherwise it fails
-*     FormatNativeVds -> handles anything under 32GB
-* 
-*
-*/
