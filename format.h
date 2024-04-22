@@ -3,7 +3,7 @@
 #include <windows.h>
 #include <winioctl.h>   // for MEDIA_TYPE
 #include <string>
-
+#include "fat32_format.h"
 
 enum CALLBACKCOMMAND {
     PROGRESS,
@@ -24,9 +24,6 @@ enum CALLBACKCOMMAND {
     STRUCTUREPROGRESS
 };
 
-// 
-// FMIFS callback definition 
-// 
 typedef BOOLEAN(WINAPI* PFMIFSCALLBACK)(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo);
 
 enum class FMIFS_MEDIA_TYPE
@@ -35,8 +32,6 @@ enum class FMIFS_MEDIA_TYPE
     RemovableMedia = MEDIA_TYPE::RemovableMedia,     // Removable media other than floppy
     FixedMedia = MEDIA_TYPE::FixedMedia,             // Fixed hard disk media
 };
-
-
 
 struct FORMAT_DATA
 {
@@ -52,5 +47,6 @@ public:
 public:
     VolumeFormatter();
     ~VolumeFormatter();
-    BOOL TryFormat();
+    BOOL FMIFS_Format(const wchar_t* driveRoot, const wchar_t* fileSystem, const wchar_t* volumeLabel, DWORD clusterSize);
+    BOOL large_FAT32_Format(const wchar_t* driveRoot);
 };

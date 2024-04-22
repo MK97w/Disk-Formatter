@@ -20,7 +20,7 @@ BOOLEAN FormatCallback(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInf
 }
 
 
-BOOL VolumeFormatter::TryFormat()
+BOOL VolumeFormatter::FMIFS_Format(const wchar_t* driveRoot, const wchar_t* fileSystem, const wchar_t* volumeLabel, DWORD clusterSize)
 {
     FORMAT_DATA fd;
     fd.fOk = FALSE;
@@ -44,7 +44,7 @@ BOOL VolumeFormatter::TryFormat()
             if (FormatEx)
             {
                 TlsSetValue(g_dwTlsIndex, &fd);
-                FormatEx(L"D:\\", FMIFS_MEDIA_TYPE::RemovableMedia, L"NTFS", L"REMAIN_INDOORS", TRUE, 8192, &FormatCallback);
+                FormatEx(driveRoot, FMIFS_MEDIA_TYPE::RemovableMedia,fileSystem, volumeLabel, TRUE, clusterSize, &FormatCallback);
             }
 
             FreeLibrary(hmod);

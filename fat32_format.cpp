@@ -123,14 +123,6 @@ DWORD get_volume_id()
 	return lo + (hi << 16);
 }
 
-struct format_params
-{
-	int sectors_per_cluster = 0;        // can be zero for default or 1,2,4,8,16,32 or 64
-	bool make_protected_autorun = false;
-	bool all_yes = false;
-	char volume_label[sizeof(FAT_BOOTSECTOR32::sVolLab) + 1] = {};
-};
-
 [[noreturn]]
 void die(_In_z_ PCSTR error)
 {
@@ -282,7 +274,7 @@ BYTE get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ DWORD BytesPerSec
 	return 1;
 }
 
-int format_volume(_In_z_ LPCSTR vol, _In_ const format_params* params)
+int formatLarge_FAT32(_In_z_ LPCSTR vol)
 {
 	DWORD cbRet;
 	BOOL  bRet;
@@ -302,14 +294,14 @@ int format_volume(_In_z_ LPCSTR vol, _In_ const format_params* params)
 	ULONGLONG qTotalSectors;
 	ULONGLONG FatNeeded, ClusterCount;
 
-	if (!IsDebuggerPresent() && !params->all_yes)
+	/*if (!IsDebuggerPresent() && !params->all_yes)
 	{
 		printf("Warning ALL data on drive '%s' will be lost irretrievably, are you sure\n(y/n) :", vol);
 		if (toupper(getchar()) != 'Y')
 		{
 			exit(EXIT_FAILURE);
 		}
-	}
+	}*/
 
 	HANDLE hDevice = CreateFileA(
 		vol,
@@ -418,10 +410,7 @@ int format_volume(_In_z_ LPCSTR vol, _In_ const format_params* params)
 	memcpy(pFAT32BootSect->sOEMName, "MSWIN4.1", sizeof(FAT_BOOTSECTOR32::sOEMName));
 	pFAT32BootSect->wBytsPerSec = (WORD)BytesPerSect;
 
-	if (params->sectors_per_cluster)
-		SectorsPerCluster = (BYTE)params->sectors_per_cluster;
-	else
-		SectorsPerCluster = get_sectors_per_cluster(piDrive.PartitionLength.QuadPart, BytesPerSect);
+	SectorsPerCluster = get_sectors_per_cluster(piDrive.PartitionLength.QuadPart, BytesPerSect);
 
 	pFAT32BootSect->bSecPerClus = SectorsPerCluster;
 	pFAT32BootSect->wRsvdSecCnt = ReservedSectCount;
@@ -526,29 +515,19 @@ int format_volume(_In_z_ LPCSTR vol, _In_ const format_params* params)
 	}
 
 	// Now we're commited - print some info first
-	printf("Size : %gGB %lu sectors\n", piDrive.PartitionLength.QuadPart / (1024.f * 1024.f * 1024.f), TotalSectors);
-	printf("%lu Bytes Per Sector, Cluster size %lu bytes\n", BytesPerSect, SectorsPerCluster * BytesPerSect);
-	printf("Volume ID is %04lX:%04lX\n", pFAT32BootSect->dBS_VolID >> 16, pFAT32BootSect->dBS_VolID & 0xffff);
-	printf("%u Reserved Sectors, %lu Sectors per FAT, %u fats\n", ReservedSectCount, FatSize, NumFATs);
 
-	printf("%llu Total clusters\n", ClusterCount);
 
 	// fix up the FSInfo sector
 	pFAT32FsInfo->dFree_Count = (UserAreaSize / SectorsPerCluster) - 1;
 	pFAT32FsInfo->dNxt_Free = 3; // clusters 0-1 resered, we used cluster 2 for the root dir
 
-	printf("%lu Free Clusters\n", pFAT32FsInfo->dFree_Count);
-	// Work out the Cluster count
 
-	printf("Formatting drive %s...\n", vol);
 
 	// Once zero_sectors has run, any data on the drive is basically lost....
 
 	// First zero out ReservedSect + FatSize * NumFats + SectorsPerCluster
 	SystemAreaSize = (pFAT32BootSect->wRsvdSecCnt + (pFAT32BootSect->bNumFATs * FatSize) + SectorsPerCluster);
-	printf("Clearing out %lu sectors for Reserved sectors, fats and root directory...\n", SystemAreaSize);
 	zero_sectors(hDevice, 0, BytesPerSect, SystemAreaSize);
-	puts("Initialising reserved sectors and FATs...");
 	// Now we should write the boot sector and fsinfo twice, once at 0 and once at the backup boot sect position
 	for (int i = 0; i < 2; i++)
 	{
@@ -562,13 +541,6 @@ int format_volume(_In_z_ LPCSTR vol, _In_ const format_params* params)
 	{
 		int SectorStart = pFAT32BootSect->wRsvdSecCnt + (i * FatSize);
 		write_sect(hDevice, SectorStart, BytesPerSect, pFirstSectOfFat, 1);
-	}
-
-	if (params->make_protected_autorun)
-	{
-		memcpy(pFAT32Directory[0].DIR_Name, "AUTORUN INF", sizeof(FAT_DIRECTORY::DIR_Name));
-		pFAT32Directory[0].DIR_Attr = FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM;
-		write_sect(hDevice, ReservedSectCount + NumFATs * FatSize, BytesPerSect, pFAT32Directory, 1);
 	}
 
 	// The filesystem recogniser in Windows XP doesn't use the partition type - in can be 

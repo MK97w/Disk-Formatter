@@ -223,6 +223,8 @@ int main()
    VolumeFormatter formatter;
    listAllVolumeInfo();
    //formatter.FMIFS_Format(L"E:\\",L"NTFS");
+   formatLarge_FAT32(R"(\\.\D:)");
+   SetVolumeLabelA(R"(\\.\D:\\)", "mertmert");
    listAllVolumeInfo();
 
 }
