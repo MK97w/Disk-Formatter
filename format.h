@@ -47,6 +47,7 @@ public:
 public:
     VolumeFormatter();
     ~VolumeFormatter();
+    void formatVolume();
     BOOL FMIFS_Format(const wchar_t* driveRoot, const wchar_t* fileSystem, const wchar_t* volumeLabel, DWORD clusterSize);
-    BOOL formatLarge_FAT32(LPCSTR driveRoot);
+    BOOL Large_FAT32_Format(LPCSTR driveRoot);
 };

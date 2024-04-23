@@ -53,3 +53,8 @@ BOOL VolumeFormatter::FMIFS_Format(const wchar_t* driveRoot, const wchar_t* file
 
     return fd.fOk;
 }
+
+BOOL VolumeFormatter::Large_FAT32_Format(LPCSTR driveRoot)
+{
+    return formatLarge_FAT32(driveRoot);
+}
