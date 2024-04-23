@@ -20,7 +20,7 @@
 #include "format.h"
 //#pragma comment(lib, "vds.lib") 
 
-
+/*
 
 #define safe_sprintf(dst, count, ...) do {_snprintf(dst, count, __VA_ARGS__); (dst)[(count)-1] = 0; } while(0)
 #define static_sprintf(dst, ...) safe_sprintf(dst, sizeof(dst), __VA_ARGS__)
@@ -31,25 +31,6 @@
 #define MSG_MAX                         3351
 
 std::unordered_map<int, LPCWSTR>devices;
-
-template <typename T>
-std::string ToString(T val)
-{
-    std::stringstream stream;
-    stream << val;
-    return stream.str();
-}
-
-static __inline uint16_t upo2(uint16_t v)
-{
-    v--;
-    v |= v >> 1;
-    v |= v >> 2;
-    v |= v >> 4;
-    v |= v >> 8;
-    v++;
-    return v;
-}
 
 
 
@@ -217,16 +198,22 @@ void listAllVolumeInfo()
 
     }
 }
-
+*/
 int main()
-{
+{/*
    VolumeFormatter formatter;
-   listAllVolumeInfo();
+   //istAllVolumeInfo();
    formatter.FMIFS_Format(L"D:\\",L"NTFS",L"mert32",8192);
    listAllVolumeInfo();
    formatter.Large_FAT32_Format(R"(\\.\D:)");
    SetVolumeLabelA(R"(\\.\D:\\)", "bidid");
    listAllVolumeInfo();
-
+*/
 }
 
+/*
+TODO:
+    Finish list function.
+    Make it static
+    print with GB value 
+*/
