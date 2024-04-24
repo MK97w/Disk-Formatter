@@ -7,6 +7,7 @@ class Drive
 {
 public:
 	Drive();
+	~Drive();
 	inline TCHAR get_drivePath() { return drivePath; }
 	inline PCWSTR get_driveName() { return driveName; }
 	inline PCWSTR get_filesystem() { return filesystem; }

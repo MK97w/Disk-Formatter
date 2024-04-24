@@ -42,6 +42,13 @@ Drive::Drive() :
 {
 
 }
+Drive::~Drive()
+{
+    if (drivePath) { drivePath = '\0'; };
+    if (driveName) {  delete[] driveName; driveName = nullptr; };
+    if (filesystem) { delete[] filesystem; filesystem = nullptr; };
+    if (size) { size = 0; }
+}
 
 uint64_t Drive::getDriveSize_API(HANDLE& hDrive)
 {
