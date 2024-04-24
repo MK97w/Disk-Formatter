@@ -22,6 +22,7 @@ namespace helperFunction
         LPCWSTR wideString = temp.c_str();
         return wideString;
     }
+
     uint16_t _nextPowerOfTwo(uint16_t val) 
     {
         val--;
@@ -33,7 +34,14 @@ namespace helperFunction
         return val;
     }
 }
+Drive::Drive() :
+    drivePath{},
+    driveName{},
+    filesystem{},
+    size{}
+{
 
+}
 
 uint64_t Drive::getDriveSize_API(HANDLE& hDrive)
 {
@@ -46,6 +54,7 @@ uint64_t Drive::getDriveSize_API(HANDLE& hDrive)
         NULL, 0, geometry, sizeof(geometry), &size, NULL);
     return DiskGeometry->DiskSize.QuadPart;
 }
+
 uint16_t Drive::logicalDriveSize(uint64_t size)
 {
     //implement
@@ -73,6 +82,7 @@ void Drive::getAllDriveInfo()
 
         if (driveType == DRIVE_REMOVABLE && driveType != DRIVE_FIXED)
         {
+            Drive drive;
             int idCounter = 0;
 
             _TCHAR volumeName[MAX_PATH];
@@ -83,15 +93,21 @@ void Drive::getAllDriveInfo()
 
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
-                hDrive = CreateFile(helperFunction::_API_CompatablePath(drivePath[0]),
+                LPCWSTR wideString = helperFunction::_API_CompatablePath(drivePath[0]);
+                hDrive = CreateFile( L"\\\\.\\F:",
                     0,FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
                 
                 if (hDrive == INVALID_HANDLE_VALUE)
                 {
+                    CloseHandle(hDrive); 
                     break;
                 }
-      //          driveMap[idCounter].set_size(getDriveSize_API((hDrive)));
-      //          driveMap[idCounter].set_drivePath(_API_CompatablePath(drivePath[0]));
+                CloseHandle(hDrive);
+                drive.set_drivePath(drivePath[0]);
+                drive.set_driveName(volumeName);
+                drive.set_size(drive.getDriveSize_API((hDrive)));
+                drive.set_filesystem(fileSystem);
+                driveMap.emplace(idCounter++,drive);
             }
         }
     }

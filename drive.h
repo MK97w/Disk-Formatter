@@ -7,24 +7,28 @@ class Drive
 {
 public:
 	Drive();
-	PCWSTR get_drivePath();
-	PCWSTR get_driveName();
-	PCWSTR get_filesystem();
-	uint64_t get_size();
+	inline TCHAR get_drivePath() { return drivePath; }
+	inline PCWSTR get_driveName() { return driveName; }
+	inline PCWSTR get_filesystem() { return filesystem; }
+	inline uint64_t get_size() { return size; }
 
-	void set_drivePath(PCWSTR);
-	void set_driveName(PCWSTR);
-	void set_filesystem(PCWSTR);
-	void set_size(uint64_t);
+	inline void set_drivePath(TCHAR pth) { drivePath = pth; }
+	inline void set_driveName(PCWSTR drvnm) { driveName = drvnm; }
+	inline void set_filesystem(PCWSTR fs) { filesystem = fs; }
+	inline void set_size(uint64_t sz) { size = sz; }
 
-	void getAllDriveInfo();
+	static void getAllDriveInfo();
+
+
+	
 
 private:
-	PCWSTR drivePath;
+	TCHAR drivePath;
 	PCWSTR driveName;
 	PCWSTR filesystem;
 	uint64_t size;
-   std::unordered_map<int, Drive> driveMap;
+	static inline std::unordered_map<int, Drive> driveMap{};
+    
 
 private:
 	uint64_t getDriveSize_API(HANDLE&);

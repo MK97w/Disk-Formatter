@@ -18,6 +18,7 @@
 #include <Vds.h>
 #include "fat32_format.h"
 #include "format.h"
+#include "drive.h"
 //#pragma comment(lib, "vds.lib") 
 
 /*
@@ -121,7 +122,7 @@ std::wstring GetVolumeGuid(const std::wstring& mountPoint)
     return std::wstring();
 }
 
-
+*/
 
 
 
@@ -170,7 +171,7 @@ void listAllVolumeInfo()
                     std::cout << error << '\n';
                     break;
                 }
-                uint64_t drive_size = GetDriveSize(hDrive);
+               // uint64_t drive_size = GetDriveSize(hDrive);
 
                 BYTE geometry[128];
                 if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
@@ -181,13 +182,13 @@ void listAllVolumeInfo()
                 else
                 {
                     CloseHandle(hDrive);
-                    devices[foundDevices] = wideString;
+                    //devices[foundDevices] = wideString;
                     std::cout << "==========================================================\n";
                     std::wcout << "Drive Path: " << drivePath << '\n';
-                    std::wcout << "GUID: " << GetVolumeGuid(drivePath) << '\n';
+                    //std::wcout << "GUID: " << GetVolumeGuid(drivePath) << '\n';
                     std::wcout << "Drive Name: " << volumeName << '\n';
                     std::wcout << "File System: " << fileSystem << '\n';
-                    std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
+                    //std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
                     std::cout << "==========================================================\n";
 
                 }
@@ -198,9 +199,12 @@ void listAllVolumeInfo()
 
     }
 }
-*/
+
 int main()
-{/*
+{
+    listAllVolumeInfo();
+    Drive::getAllDriveInfo();
+    /*
    VolumeFormatter formatter;
    //istAllVolumeInfo();
    formatter.FMIFS_Format(L"D:\\",L"NTFS",L"mert32",8192);
