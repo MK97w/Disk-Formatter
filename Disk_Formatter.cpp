@@ -204,6 +204,7 @@ int main()
 {
     listAllVolumeInfo();
     Drive::getAllDriveInfo();
+    Drive::printDriveMap();
     /*
    VolumeFormatter formatter;
    //istAllVolumeInfo();
@@ -212,7 +213,9 @@ int main()
    formatter.Large_FAT32_Format(R"(\\.\D:)");
    SetVolumeLabelA(R"(\\.\D:\\)", "bidid");
    listAllVolumeInfo();
+  
 */
+    return 0;
 }
 
 /*

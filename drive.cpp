@@ -13,14 +13,12 @@ namespace helperFunction
         return stream.str();
     }
 
-    LPCWSTR _API_CompatablePath(_TCHAR tchar)
+    std::wstring _API_CompatablePath(TCHAR tchar)
     {
-        std::string path = "\\\\.\\";
-        path.append(1, static_cast<char>(tchar));
-        path += ":";
-        std::wstring temp = std::wstring(path.begin(), path.end());
-        LPCWSTR wideString = temp.c_str();
-        return wideString;
+        std::wstring path = L"\\\\.\\";
+        path += tchar;
+        path += L":";
+        return path;
     }
 
     uint16_t _nextPowerOfTwo(uint16_t val) 
@@ -40,14 +38,18 @@ Drive::Drive() :
     filesystem{},
     size{}
 {
-
+    std::cout << "live!";
 }
 Drive::~Drive()
-{
-    if (drivePath) { drivePath = '\0'; };
-    if (driveName) {  delete[] driveName; driveName = nullptr; };
-    if (filesystem) { delete[] filesystem; filesystem = nullptr; };
-    if (size) { size = 0; }
+{/*
+    drivePath = '\0';   
+    driveName = nullptr; 
+    delete[] driveName;
+    filesystem = nullptr; 
+    delete[] filesystem;
+    size = 0;
+*/
+    std::cout << "died!";
 }
 
 uint64_t Drive::getDriveSize_API(HANDLE& hDrive)
@@ -89,9 +91,6 @@ void Drive::getAllDriveInfo()
 
         if (driveType == DRIVE_REMOVABLE && driveType != DRIVE_FIXED)
         {
-            Drive drive;
-            int idCounter = 0;
-
             _TCHAR volumeName[MAX_PATH];
             _TCHAR fileSystem[MAX_PATH];
             DWORD serialNumber;
@@ -100,8 +99,8 @@ void Drive::getAllDriveInfo()
 
             if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
             {
-                LPCWSTR wideString = helperFunction::_API_CompatablePath(drivePath[0]);
-                hDrive = CreateFile( L"\\\\.\\F:",
+       
+                hDrive = CreateFile(helperFunction::_API_CompatablePath(drivePath[0]).c_str(),
                     0,FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
                 
                 if (hDrive == INVALID_HANDLE_VALUE)
@@ -109,15 +108,26 @@ void Drive::getAllDriveInfo()
                     CloseHandle(hDrive); 
                     break;
                 }
+                Drive drive;
                 CloseHandle(hDrive);
                 drive.set_drivePath(drivePath[0]);
                 drive.set_driveName(volumeName);
                 drive.set_size(drive.getDriveSize_API((hDrive)));
                 drive.set_filesystem(fileSystem);
-                driveMap.emplace(idCounter++,drive);
+                driveMap.emplace(idCounter++,std::move(drive));
             }
         }
     }
 }
-
-
+void Drive::printDriveMap()
+{
+    for (const auto& pair : driveMap)
+    {
+        std::wcout << "Drive ID: " << pair.first << '\n';
+        std::wcout << "Drive Path: " << pair.second.get_drivePath() << '\n';
+        std::wcout << "Drive Name: " << pair.second.get_driveName() << '\n';
+        std::wcout << "File System: " << pair.second.get_filesystem() << '\n';
+        std::wcout << "Drive Size: " << pair.second.get_size() << '\n';
+        std::wcout << "==============================\n";
+    }
+}
