@@ -1,4 +1,5 @@
 #include "drive.h"
+#include <sstream> 
 #include <iostream>
 
 #define STATIC
@@ -31,6 +32,21 @@ namespace helperFunction
         val++;
         return val;
     }
+
+    std::string addSuffix(int suffix, std::string str)
+    {
+      if (suffix == 1)
+            str += " KB";
+      else if (suffix == 2)
+            str += " MB";
+      else if (suffix == 3)
+            str += " GB";
+      else if (suffix == 4)
+            str += " TB";
+
+      return str;
+
+    }
 }
 Drive::Drive() :
     drivePath{},
@@ -52,7 +68,7 @@ Drive::~Drive()
     //std::cout << "died!";
 }
 
-uint64_t Drive::getDriveSize_API(HANDLE& hDrive)
+uint64_t Drive::getDriveSize_API(HANDLE& hDrive) const
 {
     BOOL r;
     DWORD size;
@@ -64,11 +80,33 @@ uint64_t Drive::getDriveSize_API(HANDLE& hDrive)
     return DiskGeometry->DiskSize.QuadPart;
 }
 
-uint16_t Drive::logicalDriveSize(uint64_t size)
+std::string Drive::logicalDriveSize(uint64_t physicalSize) const
 {
-    //implement
-    return 0;
+    int suffix{ 0 };
+    std::string res{ };
+    double hr_size = static_cast<double>(physicalSize);
+    double t;
+    uint16_t i_size;
+    const double divider = 1000.0;
+
+    for (suffix = 0; suffix < MAX_SIZE_SUFFIXES - 1 ; suffix++)
+    {
+        if (hr_size < divider)
+            break;
+        hr_size /= divider;
+    }
+    if (hr_size > 0)
+    {
+        t = static_cast<double>(helperFunction::_nextPowerOfTwo(static_cast<uint16_t>(hr_size)));
+        i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
+        auto tmp = helperFunction::_toString(static_cast<int>(i_size));
+        res = helperFunction::addSuffix(suffix ,tmp);
+    }
+    return res;
 }
+
+
+
 void Drive::getAllDriveInfo()
 {
     HANDLE hDrive;
@@ -119,16 +157,16 @@ void Drive::getAllDriveInfo()
         }
     }
 }
+
 void Drive::printDriveMap()
 {
-
-    for (const auto& pair : driveMap)
+    for ( const auto& pair : driveMap )
     {
         std::wcout << "Drive ID: " << pair.first << '\n';
         std::wcout << "Drive Path: " << pair.second.get_drivePath() << '\n';
         std::wcout << "Drive Name: " << pair.second.get_driveName() << '\n';
         std::wcout << "File System: " << pair.second.get_filesystem() << '\n';
-        std::wcout << "Drive Size: " << pair.second.get_size() << '\n';
+        std::cout << "Drive Size: " << pair.second.get_size<sizingFormat::LOGICAL>()<< '\n';
         std::wcout << "==============================\n";
     }
 }

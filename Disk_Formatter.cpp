@@ -21,95 +21,6 @@
 #include "drive.h"
 //#pragma comment(lib, "vds.lib") 
 
-/*
-
-#define safe_sprintf(dst, count, ...) do {_snprintf(dst, count, __VA_ARGS__); (dst)[(count)-1] = 0; } while(0)
-#define static_sprintf(dst, ...) safe_sprintf(dst, sizeof(dst), __VA_ARGS__)
-
-#define STR_NO_LABEL                "NO_LABEL"
-#define MSG_020                         3020
-#define MSG_000                         3000
-#define MSG_MAX                         3351
-
-std::unordered_map<int, LPCWSTR>devices;
-*/
-
-
-uint64_t GetDriveSize(HANDLE& hDrive)
-{
-    BOOL r;
-    DWORD size;
-    BYTE geometry[256];
-    PDISK_GEOMETRY_EX DiskGeometry = (PDISK_GEOMETRY_EX)(void*)geometry;
-
-    r = DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
-        NULL, 0, geometry, sizeof(geometry), &size, NULL);
-
-    if (!r || size <= 0)
-        return 0;
-    return DiskGeometry->DiskSize.QuadPart;
-}
-
-/*-
-std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units)
-{
-
-    const char* default_msg_table[MSG_MAX - MSG_000] = { "%s", 0 };
-    int suffix;
-    static char str_size[32];
-    std::string res{ };
-    const char* dir = "";
-    double hr_size = (double)size;
-    double t;
-    uint16_t i_size;
-    const char** _msg_table = default_msg_table;
-    const double divider = fake_units ? 1000.0 : 1024.0;
-
-    for (suffix = 0; suffix < 6 - 1; suffix++) {
-        if (hr_size < divider)
-            break;
-        hr_size /= divider;
-    }
-    if (suffix == 0) {
-        static_sprintf(str_size, "%s%d%s %s", dir, (int)hr_size, dir, _msg_table[MSG_020 - MSG_000]);
-    }
-    else if (fake_units)
-    {
-        if (hr_size < 8) // 1-8 terrabyte a kadar buraya girecek 
-        {
-            //static_sprintf(str_size, (fabs((hr_size * 10.0) - (floor(hr_size + 0.5) * 10.0)) < 0.5) ? "%0.0f%s" : "%0.1f%s",
-              //  hr_size, _msg_table[MSG_020 + suffix - MSG_000]);
-
-            t = (double)upo2((uint16_t)hr_size);
-            i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
-            res = std::to_string(static_cast<int>(i_size));
-            if (suffix == 3)
-                res += " GB";
-            else if (suffix == 4)
-                res += " TB";
-            else if (suffix == 2)
-                res += " MB";
-
-        }
-        else {
-            t = (double)upo2((uint16_t)hr_size);
-            i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
-            res = std::to_string(static_cast<int>(i_size));
-            if (suffix == 3)
-                res += " GB";
-            else if (suffix == 4)
-                res += " TB";
-            else if (suffix == 2)
-                res += " MB";
-        }
-    }
-    else {
-        static_sprintf(str_size, (hr_size * 10.0 - (floor(hr_size) * 10.0)) < 0.5 ?
-            "%s%0.0f%s %s" : "%s%0.1f%s %s", dir, hr_size, dir, _msg_table[MSG_020 + suffix - MSG_000]);
-    }
-    return res;
-}
-
 std::wstring GetVolumeGuid(const std::wstring& mountPoint)
 {
     DWORD bufferLen = MAX_PATH;
@@ -122,7 +33,7 @@ std::wstring GetVolumeGuid(const std::wstring& mountPoint)
     return std::wstring();
 }
 
-*/
+
 
 
 
@@ -171,7 +82,7 @@ void listAllVolumeInfo()
                     std::cout << error << '\n';
                     break;
                 }
-                uint64_t drive_size = GetDriveSize(hDrive);
+                //uint64_t drive_size = GetDriveSize(hDrive);
 
                 BYTE geometry[128];
                 if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
@@ -188,7 +99,7 @@ void listAllVolumeInfo()
                     //std::wcout << "GUID: " << GetVolumeGuid(drivePath) << '\n';
                     std::wcout << "Drive Name: " << volumeName << '\n';
                     std::wcout << "File System: " << fileSystem << '\n';
-                    std::cout << "Drive Size: " << drive_size<< '\n';
+                   // std::cout << "Drive Size: " << drive_size<< '\n';
                     std::cout << "==========================================================\n";
 
                 }
@@ -202,7 +113,7 @@ void listAllVolumeInfo()
 
 int main()
 {
-    listAllVolumeInfo();
+    //listAllVolumeInfo();
    Drive::getAllDriveInfo();
    Drive::printDriveMap();
     /*
@@ -217,10 +128,3 @@ int main()
 */
     return 0;
 }
-
-/*
-TODO:
-    Finish list function.
-    Make it static
-    print with GB value 
-*/

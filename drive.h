@@ -5,34 +5,46 @@
 
 class Drive
 {
-public:
-	Drive();
-	~Drive();
-	inline _TCHAR get_drivePath()const { return drivePath; }
-	inline std::wstring get_driveName()const { return driveName; }
-	inline std::wstring get_filesystem()const { return filesystem; }
-	inline uint64_t get_size()const { return size; }
-
-	inline void set_drivePath(TCHAR pth) { drivePath = pth; }
-	inline void set_driveName(_TCHAR* drvnm) { driveName = drvnm; }
-	inline void set_filesystem(_TCHAR* fs) { filesystem = fs; }
-	inline void set_size(uint64_t sz) { size = sz; }
-
-	static void getAllDriveInfo();
-	static void printDriveMap();
-
-	
+private:
+	enum class sizingFormat { PHYSICAL, LOGICAL };
 
 private:
 	TCHAR drivePath;
 	std::wstring driveName;
 	std::wstring filesystem;
 	uint64_t size;
+	constexpr static int MAX_SIZE_SUFFIXES{ 6 };        		// bytes, KB, MB, GB, TB, PB
 	static inline std::unordered_map<int, Drive> driveMap{};
-    
+
 
 private:
-	uint64_t getDriveSize_API(HANDLE&);
-	uint16_t logicalDriveSize(uint64_t);
+	uint64_t getDriveSize_API(HANDLE&) const;
+	std::string logicalDriveSize(uint64_t) const;
+
+public:
+	Drive();
+	~Drive();
+
+	inline void set_drivePath(TCHAR pth) { drivePath = pth; }
+	inline void set_driveName(_TCHAR* drvnm) { driveName = drvnm; }
+	inline void set_filesystem(_TCHAR* fs) { filesystem = fs; }
+	inline void set_size(uint64_t sz) { size = sz; }
+
+	inline _TCHAR get_drivePath()const { return drivePath; }
+	inline std::wstring get_driveName()const { return driveName; }
+	inline std::wstring get_filesystem()const { return filesystem; }
+	
+	template <sizingFormat szFmt>
+	inline auto get_size() const
+	{
+		if constexpr (szFmt == sizingFormat::PHYSICAL)
+			return size;
+		else
+			return logicalDriveSize(size);
+	}
+
+	static void getAllDriveInfo();
+	static void printDriveMap();
+
 
 };
