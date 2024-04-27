@@ -38,7 +38,7 @@ Drive::Drive() :
     filesystem{},
     size{}
 {
-    std::cout << "live!";
+    //std::cout << "live!";
 }
 Drive::~Drive()
 {/*
@@ -49,7 +49,7 @@ Drive::~Drive()
     delete[] filesystem;
     size = 0;
 */
-    std::cout << "died!";
+    //std::cout << "died!";
 }
 
 uint64_t Drive::getDriveSize_API(HANDLE& hDrive)
@@ -121,6 +121,7 @@ void Drive::getAllDriveInfo()
 }
 void Drive::printDriveMap()
 {
+
     for (const auto& pair : driveMap)
     {
         std::wcout << "Drive ID: " << pair.first << '\n';

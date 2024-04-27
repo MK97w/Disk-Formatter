@@ -202,7 +202,7 @@ void listAllVolumeInfo()
 
 int main()
 {
-    listAllVolumeInfo();
+    //listAllVolumeInfo();
     Drive::getAllDriveInfo();
     Drive::printDriveMap();
     /*
