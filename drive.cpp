@@ -109,12 +109,12 @@ void Drive::getAllDriveInfo()
                     break;
                 }
                 Drive drive;
-                CloseHandle(hDrive);
                 drive.set_drivePath(drivePath[0]);
                 drive.set_driveName(volumeName);
                 drive.set_size(drive.getDriveSize_API((hDrive)));
                 drive.set_filesystem(fileSystem);
                 driveMap.emplace(idCounter++,std::move(drive));
+                CloseHandle(hDrive);
             }
         }
     }

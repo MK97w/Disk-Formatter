@@ -32,7 +32,7 @@
 #define MSG_MAX                         3351
 
 std::unordered_map<int, LPCWSTR>devices;
-
+*/
 
 
 uint64_t GetDriveSize(HANDLE& hDrive)
@@ -50,7 +50,7 @@ uint64_t GetDriveSize(HANDLE& hDrive)
     return DiskGeometry->DiskSize.QuadPart;
 }
 
-
+/*-
 std::string SizeToHumanReadable(uint64_t size, BOOL copy_to_log, BOOL fake_units)
 {
 
@@ -171,7 +171,7 @@ void listAllVolumeInfo()
                     std::cout << error << '\n';
                     break;
                 }
-               // uint64_t drive_size = GetDriveSize(hDrive);
+                uint64_t drive_size = GetDriveSize(hDrive);
 
                 BYTE geometry[128];
                 if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
@@ -188,7 +188,7 @@ void listAllVolumeInfo()
                     //std::wcout << "GUID: " << GetVolumeGuid(drivePath) << '\n';
                     std::wcout << "Drive Name: " << volumeName << '\n';
                     std::wcout << "File System: " << fileSystem << '\n';
-                    //std::cout << "Drive Size: " << SizeToHumanReadable(drive_size, 0, 1) << '\n';
+                    std::cout << "Drive Size: " << drive_size<< '\n';
                     std::cout << "==========================================================\n";
 
                 }
@@ -202,9 +202,9 @@ void listAllVolumeInfo()
 
 int main()
 {
-    //listAllVolumeInfo();
-    Drive::getAllDriveInfo();
-    Drive::printDriveMap();
+    listAllVolumeInfo();
+   Drive::getAllDriveInfo();
+   Drive::printDriveMap();
     /*
    VolumeFormatter formatter;
    //istAllVolumeInfo();
