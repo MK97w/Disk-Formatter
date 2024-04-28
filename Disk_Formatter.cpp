@@ -116,6 +116,8 @@ int main()
    Drive::getAllDriveInfo();
    Drive::printDriveMap();
    auto m = Drive::get_driveMap();
+   std::cout << m[0].get_logicalSize();
+
    
     /*
    VolumeFormatter formatter;

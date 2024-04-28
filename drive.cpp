@@ -51,6 +51,7 @@ namespace helperFunction
 Drive::Drive() :
     drivePath{},
     driveName{},
+    logicalSize{},
     filesystem{},
     size{}
 {
@@ -80,7 +81,7 @@ uint64_t Drive::getDriveSize_API(HANDLE& hDrive) const
     return DiskGeometry->DiskSize.QuadPart;
 }
 
-std::string Drive::logicalDriveSize(uint64_t physicalSize) const
+std::string Drive::printableLogicalSize(uint64_t physicalSize) const
 {
     int suffix{ 0 };
     std::string res{ };
@@ -102,6 +103,28 @@ std::string Drive::logicalDriveSize(uint64_t physicalSize) const
         res = helperFunction::addSuffix(suffix , helperFunction::_toString(static_cast<int>(i_size)));
     }
     return res;
+}
+
+void Drive::set_logicalSize(uint64_t physicalSize) 
+{
+    int suffix{ 0 };
+    double hr_size = static_cast<double>(physicalSize);
+    double t;
+    uint16_t i_size{};
+    const double divider = 1000.0;
+
+    for (suffix = 0; suffix < MAX_SIZE_SUFFIXES - 1; suffix++)
+    {
+        if (hr_size < divider)
+            break;
+        hr_size /= divider;
+    }
+    if (hr_size > 0)
+    {
+        t = static_cast<double>(helperFunction::_nextPowerOfTwo(static_cast<uint16_t>(hr_size)));
+        i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
+    }
+    logicalSize = static_cast<int>(i_size);
 }
 
 
@@ -149,6 +172,7 @@ void Drive::getAllDriveInfo()
                 drive.set_drivePath(drivePath[0]);
                 drive.set_driveName(volumeName);
                 drive.set_size(drive.getDriveSize_API((hDrive)));
+                drive.set_logicalSize(drive.get_size<sizingFormat::PHYSICAL>());
                 drive.set_filesystem(fileSystem);
                 driveMap.emplace(idCounter++,std::move(drive));
                 CloseHandle(hDrive);
@@ -160,10 +184,10 @@ void Drive::getAllDriveInfo()
 void Drive::printDriveMap()
 {
     std::cout 
-        << std::setw(7) << std::left << "ID "
+        << std::setw(6) << std::left << "ID "
         << std::setw(9) << "Path"
         << std::setw(13) << std::left << "Drive Name"
-        << std::setw(12) << "Drive Size"
+        << std::setw(13) << "Drive Size"
         << std::setw(12) << "Filesystem"
         << std::endl;
 
@@ -175,7 +199,7 @@ void Drive::printDriveMap()
         std::cout << std::internal <<'['<< pair.first + 1<< ']';
         std::wcout << std::internal << std::setw(5) << pair.second.get_drivePath()<<":\\";
         std::wcout << std::internal << std::setw(15) << pair.second.get_driveName();
-        std::cout << std::internal << std::setw(11) << pair.second.get_size<sizingFormat::LOGICAL>();
+        std::cout << std::internal << std::setw(11) << pair.second.get_size<sizingFormat::LOGICAL_WITH_SUFFIX>();
         std::wcout << std::internal << std::setw(12) << pair.second.get_filesystem()<<std::endl;
     }
 }
