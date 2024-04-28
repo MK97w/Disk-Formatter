@@ -1,6 +1,7 @@
 #include "drive.h"
 #include <sstream> 
 #include <iostream>
+#include <iomanip>
 
 #define STATIC
 
@@ -45,7 +46,6 @@ namespace helperFunction
             str += " TB";
 
       return str;
-
     }
 }
 Drive::Drive() :
@@ -54,7 +54,7 @@ Drive::Drive() :
     filesystem{},
     size{}
 {
-    //std::cout << "live!";
+    //std::cout << "live!"<<'\n';
 }
 Drive::~Drive()
 {/*
@@ -65,7 +65,7 @@ Drive::~Drive()
     delete[] filesystem;
     size = 0;
 */
-    //std::cout << "died!";
+    //std::cout << "died!"<<'\n';
 }
 
 uint64_t Drive::getDriveSize_API(HANDLE& hDrive) const
@@ -99,8 +99,7 @@ std::string Drive::logicalDriveSize(uint64_t physicalSize) const
     {
         t = static_cast<double>(helperFunction::_nextPowerOfTwo(static_cast<uint16_t>(hr_size)));
         i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
-        auto tmp = helperFunction::_toString(static_cast<int>(i_size));
-        res = helperFunction::addSuffix(suffix ,tmp);
+        res = helperFunction::addSuffix(suffix , helperFunction::_toString(static_cast<int>(i_size)));
     }
     return res;
 }
@@ -120,7 +119,7 @@ void Drive::getAllDriveInfo()
     }
     driveMap.clear();
 
-    int idCounter = 1;
+    int idCounter = 0;
 
     for (DWORD i = 0; i < drives; i += 4)
     {
@@ -160,13 +159,23 @@ void Drive::getAllDriveInfo()
 
 void Drive::printDriveMap()
 {
-    for ( const auto& pair : driveMap )
+    std::cout 
+        << std::setw(7) << std::left << "ID "
+        << std::setw(9) << "Path"
+        << std::setw(13) << std::left << "Drive Name"
+        << std::setw(12) << "Drive Size"
+        << std::setw(12) << "Filesystem"
+        << std::endl;
+
+    std::cout << std::setfill('-') << std::setw(52) << "-" << std::endl;
+    std::cout << std::setfill(' ');
+    
+    for (const auto& pair : driveMap)
     {
-        std::wcout << "Drive ID: " << pair.first << '\n';
-        std::wcout << "Drive Path: " << pair.second.get_drivePath() << '\n';
-        std::wcout << "Drive Name: " << pair.second.get_driveName() << '\n';
-        std::wcout << "File System: " << pair.second.get_filesystem() << '\n';
-        std::cout << "Drive Size: " << pair.second.get_size<sizingFormat::LOGICAL>()<< '\n';
-        std::wcout << "==============================\n";
+        std::cout << std::internal <<'['<< pair.first + 1<< ']';
+        std::wcout << std::internal << std::setw(5) << pair.second.get_drivePath()<<":\\";
+        std::wcout << std::internal << std::setw(15) << pair.second.get_driveName();
+        std::cout << std::internal << std::setw(11) << pair.second.get_size<sizingFormat::LOGICAL>();
+        std::wcout << std::internal << std::setw(12) << pair.second.get_filesystem()<<std::endl;
     }
 }

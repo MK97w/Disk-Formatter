@@ -107,7 +107,7 @@ High order word is calculated:
 								-----
 								1d02h
 */
-DWORD get_volume_id()
+static DWORD get_volume_id()
 {
 	SYSTEMTIME s;
 
@@ -124,7 +124,7 @@ DWORD get_volume_id()
 }
 
 [[noreturn]]
-void die(_In_z_ PCSTR error)
+static void die(_In_z_ PCSTR error)
 {
 	DWORD dw = GetLastError();
 
@@ -165,7 +165,7 @@ This is the Microsoft calculation from FATGEN
 	return( FatSz );
 */
 
-DWORD get_fat_size_sectors(_In_ DWORD DskSize, _In_ DWORD ReservedSecCnt, _In_ DWORD SecPerClus, _In_ DWORD NumFATs, _In_ DWORD BytesPerSect)
+static DWORD get_fat_size_sectors(_In_ DWORD DskSize, _In_ DWORD ReservedSecCnt, _In_ DWORD SecPerClus, _In_ DWORD NumFATs, _In_ DWORD BytesPerSect)
 {
 	const ULONGLONG FatElementSize = 4;
 
@@ -183,7 +183,7 @@ DWORD get_fat_size_sectors(_In_ DWORD DskSize, _In_ DWORD ReservedSecCnt, _In_ D
 	return (DWORD)FatSz;
 }
 
-void seek_to_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSect)
+static void seek_to_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSect)
 {
 	LARGE_INTEGER Offset;
 
@@ -194,7 +194,7 @@ void seek_to_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSec
 		die("Failed to seek");
 }
 
-void write_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSector, _In_ void* Data, _In_ DWORD NumSects)
+static void write_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSector, _In_ void* Data, _In_ DWORD NumSects)
 {
 	DWORD dwWritten;
 
@@ -205,7 +205,7 @@ void write_sect(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_ DWORD BytesPerSecto
 		die("Failed to write");
 }
 
-void zero_sectors(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_  DWORD BytesPerSect, _In_ DWORD NumSects)
+static void zero_sectors(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_  DWORD BytesPerSect, _In_ DWORD NumSects)
 {
 	LARGE_INTEGER Start, End, Ticks, Frequency;
 	DWORD qBytesTotal = NumSects * BytesPerSect;
@@ -237,12 +237,12 @@ void zero_sectors(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_  DWORD BytesPerSe
 	printf("Wrote %lu bytes in %.2f seconds, %.2f Megabytes/sec\n", qBytesTotal, fTime, fBytesTotal / (fTime * 1024.0 * 1024.0));
 }
 
-BYTE get_spc(_In_ DWORD ClusterSizeKB, _In_ DWORD BytesPerSect)
+static BYTE get_spc(_In_ DWORD ClusterSizeKB, _In_ DWORD BytesPerSect)
 {
 	DWORD spc = (ClusterSizeKB * 1024) / BytesPerSect;
 	return (BYTE)spc;
 }
-BYTE get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ DWORD BytesPerSect)
+static BYTE get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ DWORD BytesPerSect)
 {
 	LONGLONG DiskSizeMB = DiskSizeBytes / (1024 * 1024);
 

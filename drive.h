@@ -2,6 +2,7 @@
 #include <Windows.h>
 #include <unordered_map>
 #include <tchar.h>
+#include <type_traits>
 
 class Drive
 {
@@ -33,7 +34,11 @@ public:
 	inline _TCHAR get_drivePath()const { return drivePath; }
 	inline std::wstring get_driveName()const { return driveName; }
 	inline std::wstring get_filesystem()const { return filesystem; }
-	
+	static inline const std::unordered_map<int, Drive>& get_driveMap() { return driveMap; }
+
+
+
+	//i also could use a function that returns std::any
 	template <sizingFormat szFmt>
 	inline auto get_size() const
 	{

@@ -113,9 +113,10 @@ void listAllVolumeInfo()
 
 int main()
 {
-    //listAllVolumeInfo();
    Drive::getAllDriveInfo();
    Drive::printDriveMap();
+   auto m = Drive::get_driveMap();
+   
     /*
    VolumeFormatter formatter;
    //istAllVolumeInfo();
