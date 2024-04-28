@@ -33,90 +33,11 @@ std::wstring GetVolumeGuid(const std::wstring& mountPoint)
     return std::wstring();
 }
 
-
-
-
-
-void listAllVolumeInfo()
-{
-    _TCHAR buffer[MAX_PATH];
-    DWORD drives = GetLogicalDriveStrings(MAX_PATH, buffer), data_type, size;
-    HANDLE hDrive;
-    int foundDevices{ 0 };
-
-    if (drives == 0)
-    {
-        std::cerr << "Error getting logical drives. Error code: " << GetLastError() << std::endl;
-    }
-
-    // Iterate through each drive
-    for (DWORD i = 0; i < drives; i += 4)
-    {
-        _TCHAR drivePath[4] = { buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3] };
-
-        UINT driveType = GetDriveType(drivePath);
-
-        if (driveType == DRIVE_REMOVABLE && driveType != DRIVE_FIXED)
-        {
-            // Get volume information
-            _TCHAR volumeName[MAX_PATH];
-            _TCHAR fileSystem[MAX_PATH];
-            DWORD serialNumber;
-            DWORD maxComponentLength;
-            DWORD fileSystemFlags;
-
-
-            if (GetVolumeInformation(drivePath, volumeName, MAX_PATH, &serialNumber, &maxComponentLength, &fileSystemFlags, fileSystem, MAX_PATH))
-            {
-                foundDevices++;
-                std::string path = "\\\\.\\";
-                path.append(1, static_cast<char>(drivePath[0]));
-                path += ":";
-                std::wstring temp = std::wstring(path.begin(), path.end());
-                LPCWSTR wideString = temp.c_str();
-                hDrive = CreateFile(wideString, 0,
-                    FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-                if (hDrive == INVALID_HANDLE_VALUE)
-                {
-                    const DWORD error = GetLastError();
-                    std::cout << error << '\n';
-                    break;
-                }
-                //uint64_t drive_size = GetDriveSize(hDrive);
-
-                BYTE geometry[128];
-                if (!DeviceIoControl(hDrive, IOCTL_DISK_GET_DRIVE_GEOMETRY_EX,
-                    NULL, 0, geometry, sizeof(geometry), &size, NULL) && (size > 0))
-                {
-                    CloseHandle(hDrive);
-                }
-                else
-                {
-                    CloseHandle(hDrive);
-                    //devices[foundDevices] = wideString;
-                    std::cout << "==========================================================\n";
-                    std::wcout << "Drive Path: " << drivePath << '\n';
-                    //std::wcout << "GUID: " << GetVolumeGuid(drivePath) << '\n';
-                    std::wcout << "Drive Name: " << volumeName << '\n';
-                    std::wcout << "File System: " << fileSystem << '\n';
-                   // std::cout << "Drive Size: " << drive_size<< '\n';
-                    std::cout << "==========================================================\n";
-
-                }
-
-            }
-
-        }
-
-    }
-}
-
 int main()
 {
    Drive::getAllDriveInfo();
    Drive::printDriveMap();
    auto m = Drive::get_driveMap();
-   std::cout << m[0].get_logicalSize();
 
    
     /*
@@ -131,3 +52,47 @@ int main()
 */
     return 0;
 }
+/*
+MUST IMPLEMENT CLUSTER SIZES
+
+
+The default cluster sizes for FAT32 are as follows: -> maybe fix it to 4KB
+
+    < 64 MB: 512 bytes.
+    64 MB—128 MB: 1 KB.
+    128 MB—256 MB: 2 KB.
+    256 MB—8 GB: 4 KB.
+    8 GB—16 GB: 8 KB.
+    16 GB—32 GB: 16 KB.
+    32 GB—2 TB: 32 KB.
+
+
+ The default cluster size for exFAT is:
+
+    7MB – 256MB: 4KB
+    256MB – 32GB: 32KB
+    32GB – 256TB: 128KB
+    >256TB: Not supported
+
+
+the common default NTFS cluster sizes as follows:
+
+    ≤512MB: 512 bytes
+    513MB ~ 1GB: 1KB
+    1GB ~ 2GB: 2KB
+    2GB ~ 4GB: 4KB
+    4GB ~ 8GB: 8KB
+    8GB ~ 16GB: 16KB
+    16GB ~ 32GB: 32KB
+    ＞32GB: 64KB
+
+
+    https://www.easeus.com/partition-master/allocation-unit-size-fat32.html
+    https://support.microsoft.com/en-au/topic/description-of-default-cluster-sizes-for-fat32-file-system-905ea1b1-5c4e-a03f-3863-e4846a878d31
+    https://www.partitionwizard.com/partitionmagic/fat32-allocation-unit-size.html
+    https://www.partitionwizard.com/partitionmagic/ntfs-cluster-size.html
+    https://www.partitionwizard.com/partitionmagic/allocation-unit-size-exfat.html
+
+
+
+*/
