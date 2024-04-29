@@ -1,5 +1,6 @@
 #include "format.h"
 
+
 VolumeFormatter::VolumeFormatter() {}
 
 VolumeFormatter::~VolumeFormatter()
@@ -9,6 +10,7 @@ VolumeFormatter::~VolumeFormatter()
         TlsFree(g_dwTlsIndex);
     }
 }
+
 BOOLEAN FormatCallback(CALLBACKCOMMAND Command, DWORD SubAction, PVOID ActionInfo)
 {
     FORMAT_DATA* fd = (FORMAT_DATA*)TlsGetValue(VolumeFormatter::g_dwTlsIndex);
@@ -57,4 +59,32 @@ BOOL VolumeFormatter::FMIFS_Format(const wchar_t* driveRoot, const wchar_t* file
 BOOL VolumeFormatter::Large_FAT32_Format(LPCSTR driveRoot)
 {
     return formatLarge_FAT32(driveRoot);
+}
+
+void VolumeFormatter::formatDrive(const Drive& d , const std::wstring& targetFS)
+{
+    
+}
+
+DWORD VolumeFormatter::getClusterSize(int targetSize, PCWSTR targetFS )
+{
+    if (wcscmp(targetFS, L"FAT32") == 0)
+    {
+       
+        return 4096;
+    }
+    else if (wcscmp(targetFS, L"NTFS") == 0)
+    {
+        // Handle NTFS cluster size
+        return 8192;
+    }
+    else if (wcscmp(targetFS, L"exFAT") == 0)
+    {
+        // Handle exFAT cluster size
+        return 16384;
+    }
+    else
+    {
+        return 0;
+    }
 }

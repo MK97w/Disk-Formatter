@@ -4,6 +4,7 @@
 #include <winioctl.h>   // for MEDIA_TYPE
 #include <string>
 #include "fat32_format.h"
+#include "drive.h"
 
 enum CALLBACKCOMMAND {
     PROGRESS,
@@ -47,7 +48,9 @@ public:
 public:
     VolumeFormatter();
     ~VolumeFormatter();
-    void formatVolume();
+    void formatDrive(const Drive& ,const std::wstring&);
     BOOL FMIFS_Format(const wchar_t* driveRoot, const wchar_t* fileSystem, const wchar_t* volumeLabel, DWORD clusterSize);
-    BOOL Large_FAT32_Format(LPCSTR driveRoot);
+    BOOL Large_FAT32_Format(LPCSTR driveRoot); 
+private:
+    DWORD getClusterSize(int, PCWSTR);
 };

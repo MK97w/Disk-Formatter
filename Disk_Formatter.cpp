@@ -18,7 +18,7 @@
 #include <Vds.h>
 #include "fat32_format.h"
 #include "format.h"
-#include "drive.h"
+//#include "drive.h"
 //#pragma comment(lib, "vds.lib") 
 
 std::wstring GetVolumeGuid(const std::wstring& mountPoint)
@@ -40,16 +40,20 @@ int main()
    auto m = Drive::get_driveMap();
 
    
-    /*
+   
    VolumeFormatter formatter;
    //istAllVolumeInfo();
-   formatter.FMIFS_Format(L"D:\\",L"NTFS",L"mert32",8192);
-   listAllVolumeInfo();
-   formatter.Large_FAT32_Format(R"(\\.\D:)");
-   SetVolumeLabelA(R"(\\.\D:\\)", "bidid");
-   listAllVolumeInfo();
+
+   std::wstring b = L"FAT32";
+   formatter.FMIFS_Format(L"D:\\",b.c_str(), L"mmmmm", 8192);
+   Drive::getAllDriveInfo();
+   Drive::printDriveMap();
+   //listAllVolumeInfo();
+   //formatter.Large_FAT32_Format(R"(\\.\D:)");
+  // SetVolumeLabelA(R"(\\.\D:\\)", "bidid");
+//   listAllVolumeInfo();
   
-*/
+
     return 0;
 }
 /*
