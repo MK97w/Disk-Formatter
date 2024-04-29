@@ -63,28 +63,84 @@ BOOL VolumeFormatter::Large_FAT32_Format(LPCSTR driveRoot)
 
 void VolumeFormatter::formatDrive(const Drive& d , const std::wstring& targetFS)
 {
-    
-}
+    auto driveRoot = d.get_drivePath();
+    std::basic_string<TCHAR> drivePath;
+    drivePath += driveRoot;
+    drivePath += _T(":\\");
 
-DWORD VolumeFormatter::getClusterSize(int targetSize, PCWSTR targetFS )
+    if (targetFS == L"NTFS")
+    {
+       auto clusterSize = getClusterSize( 15518924800 ,targetFS);
+       FMIFS_Format(drivePath.c_str(), targetFS.c_str(), d.get_driveName().c_str(), clusterSize);
+         
+    }
+    //use c.str() when sending to API!
+}
+DWORD VolumeFormatter::getClusterSize(uint64_t targetSize, const std::wstring& targetFS)
 {
-    if (wcscmp(targetFS, L"FAT32") == 0)
+    //LOOKS DISGUSTING! PLEASE DIVIDE INTO SUB FUNCTIONS
+
+    // Convert target size from MB to bytes
+   // uint64_t targetSizeBytes = targetSizeMB * MB;
+
+    if (targetFS == L"FAT32")
     {
-       
-        return 4096;
+        if (targetSize < 64ull * MB)
+        {
+            return 512; // bytes
+        }
+        else if (targetSize <= 128ull * MB)
+        {
+            return 1024; // bytes
+        }
+        else if (targetSize <= 256ull * MB)
+        {
+            return 2048; // bytes
+        }
+        else if (targetSize <= 8192ull * MB)
+        {
+            return 4096; // bytes
+        }
+        else if (targetSize <= 16384ull * MB)
+        {
+            return 8192; // bytes
+        }
+        else if (targetSize <= 32768ull * MB)
+        {
+            return 16384; // bytes
+        }
+        else
+        {
+            return 32768; // bytes
+        }
     }
-    else if (wcscmp(targetFS, L"NTFS") == 0)
+    else if (targetFS == L"exFAT")
     {
-        // Handle NTFS cluster size
-        return 8192;
+        if (targetSize < 7ull * MB)
+        {
+            return 4096; // bytes
+        }
+        else if (targetSize <= 256ull * MB)
+        {
+            return 32768; // bytes
+        }
+        else if (targetSize <= 32768ull * MB)
+        {
+            return 131072; // bytes
+        }
+        else
+        {
+            return 0; // Not supported
+        }
     }
-    else if (wcscmp(targetFS, L"exFAT") == 0)
+    else if (targetFS == L"NTFS")
     {
-        // Handle exFAT cluster size
-        return 16384;
+        https://techcommunity.microsoft.com/t5/storage-at-microsoft/cluster-size-recommendations-for-refs-and-ntfs/ba-p/425960
+        return 4096; // bytes  
     }
     else
     {
+        // Default case or error handling
         return 0;
     }
 }

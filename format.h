@@ -52,5 +52,9 @@ public:
     BOOL FMIFS_Format(const wchar_t* driveRoot, const wchar_t* fileSystem, const wchar_t* volumeLabel, DWORD clusterSize);
     BOOL Large_FAT32_Format(LPCSTR driveRoot); 
 private:
-    DWORD getClusterSize(int, PCWSTR);
+    DWORD getClusterSize(uint64_t, const std::wstring& targetFS);
+private:
+    constexpr static uint64_t MB = 1024 * 1024;
+    constexpr static uint64_t GB = 1024 * MB;
+    constexpr static uint64_t TB = 1024 * GB;
 };

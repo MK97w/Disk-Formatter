@@ -6,8 +6,8 @@
 
 class Drive
 {
-private:
-	enum class sizingFormat { PHYSICAL, LOGICAL_WITH_SUFFIX };
+public:
+	enum class sizingFormat { PHYSICAL, LOGICAL_WITH_SUFFIX }; //FIX IT! I WANT THIS TO BE PRIVITE
 
 private:
 	TCHAR drivePath;
@@ -45,7 +45,7 @@ public:
 
 
 
-	//i also could use a function that returns std::any
+	//i also could use a function that returns std::any I MUST HAVE ONE FUNC TO GET PHYSICAL SIZE
 	template <sizingFormat szFmt>
 	inline auto get_size() const
 	{

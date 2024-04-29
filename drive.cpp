@@ -199,7 +199,7 @@ void Drive::printDriveMap()
         std::cout << std::internal <<'['<< pair.first + 1<< ']';
         std::wcout << std::internal << std::setw(5) << pair.second.get_drivePath()<<":\\";
         std::wcout << std::internal << std::setw(15) << pair.second.get_driveName();
-        std::cout << std::internal << std::setw(11) << pair.second.get_size<sizingFormat::LOGICAL_WITH_SUFFIX>();
+        std::cout << std::internal << std::setw(11) << pair.second.get_size<sizingFormat::PHYSICAL>();
         std::wcout << std::internal << std::setw(12) << pair.second.get_filesystem()<<std::endl;
     }
 }

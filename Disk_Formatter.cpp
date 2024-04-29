@@ -38,14 +38,15 @@ int main()
    Drive::getAllDriveInfo();
    Drive::printDriveMap();
    auto m = Drive::get_driveMap();
+   auto selectedDrive = m[0];
 
    
    
    VolumeFormatter formatter;
+   formatter.formatDrive(selectedDrive,L"NTFS");
    //istAllVolumeInfo();
+   //formatter.formatDrive(selectedDrive,L"NTFS");
 
-   std::wstring b = L"FAT32";
-   formatter.FMIFS_Format(L"D:\\",b.c_str(), L"mmmmm", 8192);
    Drive::getAllDriveInfo();
    Drive::printDriveMap();
    //listAllVolumeInfo();
