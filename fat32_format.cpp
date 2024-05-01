@@ -579,10 +579,12 @@ int formatLarge_FAT32(_In_z_ std::wstring& vol, const _In_z_ std::wstring& label
 
 	if (!bRet)
 		die("Failed to unlock device");
-
+	
+	CloseHandle(hDevice);
+	
 	vol += L"\\";
 	SetVolumeLabelW(vol.c_str(), label.c_str());
-	CloseHandle(hDevice);
+
 
 	puts("Done");
 
