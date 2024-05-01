@@ -50,11 +50,12 @@ public:
     ~VolumeFormatter();
     void formatDrive(const Drive& ,const std::wstring&);
     BOOL FMIFS_Format(const wchar_t* driveRoot, const wchar_t* fileSystem, const wchar_t* volumeLabel, DWORD clusterSize);
-    BOOL Large_FAT32_Format(LPCSTR driveRoot); 
+    BOOL Large_FAT32_Format(LPCWSTR driveRoot, LPCWSTR label);
 private:
     DWORD getClusterSize(uint64_t, const std::wstring& targetFS);
 private:
-    constexpr static uint64_t MB = 1024 * 1024;
+    constexpr static uint64_t KB = 1024;
+    constexpr static uint64_t MB = 1024 * KB;
     constexpr static uint64_t GB = 1024 * MB;
     constexpr static uint64_t TB = 1024 * GB;
-};
+};  

@@ -137,11 +137,13 @@
     <ClCompile Include="fat32_format.cpp" />
     <ClCompile Include="Disk_Formatter.cpp" />
     <ClCompile Include="format.cpp" />
+    <ClCompile Include="helper_functions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="fat32_format.h" />
     <ClInclude Include="format.h" />
     <ClInclude Include="drive.h" />
+    <ClInclude Include="helper_functions.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

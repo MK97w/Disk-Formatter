@@ -41,5 +41,5 @@ High order word is calculated:
 								1d02h
 */
 
-int formatLarge_FAT32(_In_z_ LPCSTR vol);
+int formatLarge_FAT32(_In_z_ LPCWSTR vol, _In_z_ LPCWSTR label);
 

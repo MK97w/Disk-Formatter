@@ -2,56 +2,12 @@
 #include <sstream> 
 #include <iostream>
 #include <iomanip>
+#include "helper_functions.h"
 
-#define STATIC
 
-namespace helperFunction
-{
-    template <typename T>
-    std::string _toString(T val)
-    {
-        std::stringstream stream;
-        stream << val;
-        return stream.str();
-    }
-
-    std::wstring _API_CompatablePath(TCHAR tchar)
-    {
-        std::wstring path = L"\\\\.\\";
-        path += tchar;
-        path += L":";
-        return path;
-    }
-
-    uint16_t _nextPowerOfTwo(uint16_t val) 
-    {
-        val--;
-        val |= val >> 1;
-        val |= val >> 2;
-        val |= val >> 4;
-        val |= val >> 8;
-        val++;
-        return val;
-    }
-
-    std::string addSuffix(int suffix, std::string str)
-    {
-      if (suffix == 1)
-            str += " KB";
-      else if (suffix == 2)
-            str += " MB";
-      else if (suffix == 3)
-            str += " GB";
-      else if (suffix == 4)
-            str += " TB";
-
-      return str;
-    }
-}
 Drive::Drive() :
     drivePath{},
     driveName{},
-    logicalSize{},
     filesystem{},
     size{}
 {
@@ -105,28 +61,6 @@ std::string Drive::printableLogicalSize(uint64_t physicalSize) const
     return res;
 }
 
-void Drive::set_logicalSize(uint64_t physicalSize) 
-{
-    int suffix{ 0 };
-    double hr_size = static_cast<double>(physicalSize);
-    double t;
-    uint16_t i_size{};
-    const double divider = 1000.0;
-
-    for (suffix = 0; suffix < MAX_SIZE_SUFFIXES - 1; suffix++)
-    {
-        if (hr_size < divider)
-            break;
-        hr_size /= divider;
-    }
-    if (hr_size > 0)
-    {
-        t = static_cast<double>(helperFunction::_nextPowerOfTwo(static_cast<uint16_t>(hr_size)));
-        i_size = (uint16_t)((fabs(1.0f - (hr_size / t)) < 0.05f) ? t : hr_size);
-    }
-    logicalSize = static_cast<int>(i_size);
-}
-
 
 
 void Drive::getAllDriveInfo()
@@ -172,7 +106,6 @@ void Drive::getAllDriveInfo()
                 drive.set_drivePath(drivePath[0]);
                 drive.set_driveName(volumeName);
                 drive.set_size(drive.getDriveSize_API((hDrive)));
-                drive.set_logicalSize(drive.get_size<sizingFormat::PHYSICAL>());
                 drive.set_filesystem(fileSystem);
                 driveMap.emplace(idCounter++,std::move(drive));
                 CloseHandle(hDrive);
@@ -199,7 +132,7 @@ void Drive::printDriveMap()
         std::cout << std::internal <<'['<< pair.first + 1<< ']';
         std::wcout << std::internal << std::setw(5) << pair.second.get_drivePath()<<":\\";
         std::wcout << std::internal << std::setw(15) << pair.second.get_driveName();
-        std::cout << std::internal << std::setw(11) << pair.second.get_size<sizingFormat::PHYSICAL>();
+        std::cout << std::internal << std::setw(11) << pair.second.printableLogicalSize(pair.second.get_size());
         std::wcout << std::internal << std::setw(12) << pair.second.get_filesystem()<<std::endl;
     }
 }

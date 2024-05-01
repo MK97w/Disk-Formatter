@@ -38,20 +38,19 @@ int main()
    Drive::getAllDriveInfo();
    Drive::printDriveMap();
    auto m = Drive::get_driveMap();
-   auto selectedDrive = m[0];
+   auto selectedDrive = m[1];
 
    
    
    VolumeFormatter formatter;
-   formatter.formatDrive(selectedDrive,L"NTFS");
+   formatter.formatDrive(selectedDrive,L"FAT32");
    //istAllVolumeInfo();
    //formatter.formatDrive(selectedDrive,L"NTFS");
 
    Drive::getAllDriveInfo();
    Drive::printDriveMap();
    //listAllVolumeInfo();
-   //formatter.Large_FAT32_Format(R"(\\.\D:)");
-  // SetVolumeLabelA(R"(\\.\D:\\)", "bidid");
+   //formatter.Large_FAT32_Format(R"(\\.\E:)");
 //   listAllVolumeInfo();
   
 

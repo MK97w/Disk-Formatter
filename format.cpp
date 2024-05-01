@@ -1,5 +1,6 @@
 #include "format.h"
-
+#include "helper_functions.h"
+#include <functional>
 
 VolumeFormatter::VolumeFormatter() {}
 
@@ -56,32 +57,31 @@ BOOL VolumeFormatter::FMIFS_Format(const wchar_t* driveRoot, const wchar_t* file
     return fd.fOk;
 }
 
-BOOL VolumeFormatter::Large_FAT32_Format(LPCSTR driveRoot)
+BOOL VolumeFormatter::Large_FAT32_Format(LPCWSTR driveRoot, LPCWSTR label)
 {
-    return formatLarge_FAT32(driveRoot);
+    return formatLarge_FAT32(driveRoot, label);
 }
 
 void VolumeFormatter::formatDrive(const Drive& d , const std::wstring& targetFS)
 {
     auto driveRoot = d.get_drivePath();
-    std::basic_string<TCHAR> drivePath;
-    drivePath += driveRoot;
-    drivePath += _T(":\\");
 
-    if (targetFS == L"NTFS")
+    if (targetFS == L"NTFS" || targetFS == L"exFAT" || std::logical_and<>{}(targetFS == L"FAT32", d.get_size() < 32 * GB))
     {
-       auto clusterSize = getClusterSize( 15518924800 ,targetFS);
-       FMIFS_Format(drivePath.c_str(), targetFS.c_str(), d.get_driveName().c_str(), clusterSize);
-         
+        auto clusterSize = getClusterSize(d.get_size(), targetFS);
+        std::basic_string<TCHAR> drivePath;
+        drivePath += driveRoot;
+        drivePath += _T(":\\");
+        FMIFS_Format(drivePath.c_str(), targetFS.c_str(), d.get_driveName().c_str(), clusterSize);
     }
-    //use c.str() when sending to API!
+    else
+    {
+        Large_FAT32_Format(helperFunction::_API_CompatablePath(driveRoot).c_str(), d.get_driveName().c_str());
+    }
+   
 }
 DWORD VolumeFormatter::getClusterSize(uint64_t targetSize, const std::wstring& targetFS)
 {
-    //LOOKS DISGUSTING! PLEASE DIVIDE INTO SUB FUNCTIONS
-
-    // Convert target size from MB to bytes
-   // uint64_t targetSizeBytes = targetSizeMB * MB;
 
     if (targetFS == L"FAT32")
     {
@@ -135,12 +135,11 @@ DWORD VolumeFormatter::getClusterSize(uint64_t targetSize, const std::wstring& t
     }
     else if (targetFS == L"NTFS")
     {
-        https://techcommunity.microsoft.com/t5/storage-at-microsoft/cluster-size-recommendations-for-refs-and-ntfs/ba-p/425960
+       // https://techcommunity.microsoft.com/t5/storage-at-microsoft/cluster-size-recommendations-for-refs-and-ntfs/ba-p/425960
         return 4096; // bytes  
     }
     else
     {
-        // Default case or error handling
         return 0;
     }
 }

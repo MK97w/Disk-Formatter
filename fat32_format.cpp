@@ -274,7 +274,7 @@ static BYTE get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ DWORD Byte
 	return 1;
 }
 
-int formatLarge_FAT32(_In_z_ LPCSTR vol)
+int formatLarge_FAT32(_In_z_ LPCWSTR vol, _In_z_ LPCWSTR label)
 {
 	DWORD cbRet;
 	BOOL  bRet;
@@ -303,7 +303,7 @@ int formatLarge_FAT32(_In_z_ LPCSTR vol)
 		}
 	}*/
 
-	HANDLE hDevice = CreateFileA(
+	HANDLE hDevice = CreateFile(
 		vol,
 		GENERIC_READ | GENERIC_WRITE,
 		FILE_SHARE_READ | FILE_SHARE_WRITE,
@@ -583,7 +583,7 @@ int formatLarge_FAT32(_In_z_ LPCSTR vol)
 
 	if (!bRet)
 		die("Failed to unlock device");
-
+	SetVolumeLabelW(vol, label);
 	CloseHandle(hDevice);
 
 	puts("Done");
