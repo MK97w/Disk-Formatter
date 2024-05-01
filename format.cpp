@@ -57,7 +57,7 @@ BOOL VolumeFormatter::FMIFS_Format(const wchar_t* driveRoot, const wchar_t* file
     return fd.fOk;
 }
 
-BOOL VolumeFormatter::Large_FAT32_Format(LPCWSTR driveRoot, LPCWSTR label)
+BOOL VolumeFormatter::Large_FAT32_Format( std::wstring& driveRoot, const std::wstring label)
 {
     return formatLarge_FAT32(driveRoot, label);
 }
@@ -76,7 +76,8 @@ void VolumeFormatter::formatDrive(const Drive& d , const std::wstring& targetFS)
     }
     else
     {
-        Large_FAT32_Format(helperFunction::_API_CompatablePath(driveRoot).c_str(), d.get_driveName().c_str());
+        auto drivePath = helperFunction::_API_CompatablePath(driveRoot);
+        Large_FAT32_Format(drivePath, d.get_driveName());
     }
    
 }

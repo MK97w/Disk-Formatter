@@ -2,7 +2,7 @@
 
 #include <windows.h>
 #include <winioctl.h>   // for MEDIA_TYPE
-#include <string>
+#include <string.h>
 #include "fat32_format.h"
 #include "drive.h"
 
@@ -50,7 +50,7 @@ public:
     ~VolumeFormatter();
     void formatDrive(const Drive& ,const std::wstring&);
     BOOL FMIFS_Format(const wchar_t* driveRoot, const wchar_t* fileSystem, const wchar_t* volumeLabel, DWORD clusterSize);
-    BOOL Large_FAT32_Format(LPCWSTR driveRoot, LPCWSTR label);
+    BOOL Large_FAT32_Format(  std::wstring & driveRoot, const std::wstring label);
 private:
     DWORD getClusterSize(uint64_t, const std::wstring& targetFS);
 private:

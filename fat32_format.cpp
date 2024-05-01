@@ -16,13 +16,9 @@ static const int ALIGNING_SIZE = 1024 * 1024;
 #define _CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES_MEMORY 1
 #define _CRT_SECURE_CPP_OVERLOAD_SECURE_NAMES_MEMORY   1
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-#include <windows.h>
-#include <winioctl.h>
-#include <versionhelpers.h>
+#include "fat32_format.h"
+
 
 #pragma pack(push, 1)
 struct FAT_BOOTSECTOR32
@@ -274,7 +270,7 @@ static BYTE get_sectors_per_cluster(_In_ LONGLONG DiskSizeBytes, _In_ DWORD Byte
 	return 1;
 }
 
-int formatLarge_FAT32(_In_z_ LPCWSTR vol, _In_z_ LPCWSTR label)
+int formatLarge_FAT32(_In_z_ std::wstring& vol, const _In_z_ std::wstring& label)
 {
 	DWORD cbRet;
 	BOOL  bRet;
@@ -304,7 +300,7 @@ int formatLarge_FAT32(_In_z_ LPCWSTR vol, _In_z_ LPCWSTR label)
 	}*/
 
 	HANDLE hDevice = CreateFile(
-		vol,
+		vol.c_str(),
 		GENERIC_READ | GENERIC_WRITE,
 		FILE_SHARE_READ | FILE_SHARE_WRITE,
 		NULL,
@@ -583,7 +579,9 @@ int formatLarge_FAT32(_In_z_ LPCWSTR vol, _In_z_ LPCWSTR label)
 
 	if (!bRet)
 		die("Failed to unlock device");
-	SetVolumeLabelW(vol, label);
+
+	vol += L"\\";
+	SetVolumeLabelW(vol.c_str(), label.c_str());
 	CloseHandle(hDevice);
 
 	puts("Done");

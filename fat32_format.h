@@ -8,17 +8,17 @@
 // | BPB,FSInfo,Reserved | FAT1              | FAT2              | Cluster0
 
 
-
-
 #pragma once
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+
 
 #include <windows.h>
 #include <winioctl.h>
 #include <versionhelpers.h>
 
+
+#include <string>
 
 
 /*
@@ -41,5 +41,5 @@ High order word is calculated:
 								1d02h
 */
 
-int formatLarge_FAT32(_In_z_ LPCWSTR vol, _In_z_ LPCWSTR label);
+int formatLarge_FAT32( _In_z_ std::wstring& vol, const _In_z_ std::wstring& label);
 
