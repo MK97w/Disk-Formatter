@@ -1,9 +1,8 @@
-#include<stdint.h>
 #include <Windows.h>
+#include <stdint.h>
 #include <unordered_map>
 #include <tchar.h>
-#include <type_traits>
-#include <variant>
+#include <string>
 
 class Drive
 {

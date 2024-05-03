@@ -22,7 +22,7 @@ namespace helperFunction
         return val;
     }
 
-    std::string addSuffix(int suffix, std::string str)
+    std::string addSuffix(const int suffix, std::string&& str)
     {
         if (suffix == 1)
             str += " KB";

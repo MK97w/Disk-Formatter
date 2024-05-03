@@ -19,7 +19,7 @@ namespace helperFunction
 
     uint16_t _nextPowerOfTwo(uint16_t val);
 
-    std::string addSuffix(int suffix, std::string str);
+    std::string addSuffix(const int suffix, std::string&& str);
 }
 
 #endif // HELPER_FUNCTION_H

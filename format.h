@@ -2,7 +2,6 @@
 
 #include <windows.h>
 #include <winioctl.h>   // for MEDIA_TYPE
-#include <string.h>
 #include "fat32_format.h"
 #include "drive.h"
 

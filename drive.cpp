@@ -1,5 +1,4 @@
 #include "drive.h"
-#include <sstream> 
 #include <iostream>
 #include <iomanip>
 #include "helper_functions.h"
@@ -133,6 +132,7 @@ void Drive::printDriveMap()
         std::wcout << std::internal << std::setw(5) << pair.second.get_drivePath()<<":\\";
         std::wcout << std::internal << std::setw(15) << pair.second.get_driveName();
         std::cout << std::internal << std::setw(11) << pair.second.printableLogicalSize(pair.second.get_size());
-        std::wcout << std::internal << std::setw(12) << pair.second.get_filesystem()<<std::endl;
+        std::wcout << std::internal << std::setw(12) << pair.second.get_filesystem()<< std::endl;
     }
+    std::cout << '\n';
 }
