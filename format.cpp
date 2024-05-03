@@ -72,12 +72,19 @@ void VolumeFormatter::formatDrive(const Drive& d , const std::wstring& targetFS)
         std::basic_string<TCHAR> drivePath;
         drivePath += driveRoot;
         drivePath += _T(":\\");
-        FMIFS_Format(drivePath.c_str(), targetFS.c_str(), d.get_driveName().c_str(), clusterSize);
+        if ( FMIFS_Format(drivePath.c_str(), targetFS.c_str(), d.get_driveName().c_str(), clusterSize) )
+            puts("Formatting Done!\n");
+        else
+            puts("Formatting Failed!\n");
     }
     else
     {
         auto drivePath = helperFunction::_API_CompatablePath(driveRoot);
-        Large_FAT32_Format(drivePath, d.get_driveName());
+        if( Large_FAT32_Format(drivePath, d.get_driveName()) )
+           puts("Formatting Done!\n");
+        else
+           puts("Formatting Failed!\n");
+
     }
    
 }

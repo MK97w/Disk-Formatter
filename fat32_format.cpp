@@ -585,8 +585,5 @@ int formatLarge_FAT32(_In_z_ std::wstring& vol, const _In_z_ std::wstring& label
 	vol += L"\\";
 	SetVolumeLabelW(vol.c_str(), label.c_str());
 
-
-	puts("Done");
-
 	return TRUE;
 }
