@@ -230,7 +230,7 @@ static void zero_sectors(_In_ HANDLE hDevice, _In_ DWORD Sector, _In_  DWORD Byt
 	Ticks.QuadPart = End.QuadPart - Start.QuadPart;
 	double fTime = (double)(Ticks.QuadPart) / Frequency.QuadPart;
 	double fBytesTotal = (double)qBytesTotal;
-	printf("Wrote %lu bytes in %.2f seconds, %.2f Megabytes/sec\n", qBytesTotal, fTime, fBytesTotal / (fTime * 1024.0 * 1024.0));
+	//printf("Wrote %lu bytes in %.2f seconds, %.2f Megabytes/sec\n", qBytesTotal, fTime, fBytesTotal / (fTime * 1024.0 * 1024.0));
 }
 
 static BYTE get_spc(_In_ DWORD ClusterSizeKB, _In_ DWORD BytesPerSect)

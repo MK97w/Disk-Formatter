@@ -120,22 +120,28 @@ bool proceed()
 int main()
 {
    Drive::getAllDriveInfo();
-   Drive::printDriveMap();
    auto dmap = Drive::get_driveMap();
-   auto index = getDriveIndex( dmap.size() ) -1;
-   
-   auto selectedDrive = dmap[index];
-   auto selectedFileSystem = getDesiredFileSystem();
-
-   if (proceed())
+   if (dmap.size() > 0)
    {
-        VolumeFormatter formatter;
-        formatter.formatDrive(selectedDrive, selectedFileSystem);
-   }
+       Drive::printDriveMap();
+       auto index = getDriveIndex(dmap.size()) - 1;
 
-   Drive::getAllDriveInfo();
-   Drive::printDriveMap();
-  
+       auto selectedDrive = dmap[index];
+       auto selectedFileSystem = getDesiredFileSystem();
+
+       if (proceed())
+       {
+           VolumeFormatter formatter;
+           formatter.formatDrive(selectedDrive, selectedFileSystem);
+       }
+
+       Drive::getAllDriveInfo();
+       Drive::printDriveMap();
+   }
+   else
+       std::cout << "No removable drive found to format!!!\n";
+
+ 
 
    return 0;
 }
